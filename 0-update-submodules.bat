@@ -1,23 +1,20 @@
 @echo off
+setlocal EnableExtensions EnableDelayedExpansion
+cd /d "%~dp0"
 
-:: Enable necessary extensions
-@setlocal enableextensions
+echo ::: UPDATE SUBMODULES BEGIN :::
 
-echo ::: UPDATE SUBMODULES BEGIN ::::
-
-echo Get the current directory
-set "currentDir=%CD%"
-
-echo Change the current working directory to the script directory
-@cd /d "%~dp0"
-
-del desktop.ini /A:H /S
-
-for /r %%i in (desktop.ini) do (
-    git rm --cached --force "%%i"
+for /f "delims=" %%I in ('git ls-files --full-name -- "desktop.ini" 2^>nul') do (
+    git rm --cached --force "%%I" >nul 2>&1
+)
+for /f "delims=" %%I in ('dir /s /b /a:-d "desktop.ini" 2^>nul') do (
+    del /f /q "%%I" >nul 2>&1
 )
 
 git submodule update --remote --merge
+if errorlevel 1 (
+    echo Submodule update failed. Please ensure submodules do not contain local changes.
+)
 
-echo ::: UPDATE SUBMODULES COMPLETED ::::
+echo ::: UPDATE SUBMODULES COMPLETED :::
 pause

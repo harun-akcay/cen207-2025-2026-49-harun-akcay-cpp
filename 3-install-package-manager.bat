@@ -1,37 +1,29 @@
 @echo off
-setlocal enableextensions enabledelayedexpansion
-
+setlocal EnableExtensions
 cd /d "%~dp0"
 
-:: Check if Chocolatey is installed
 echo Checking if Chocolatey is installed...
-if exist "%ProgramData%\Chocolatey\bin\choco.exe" (
+set "CHOC_PATH=%ProgramData%\Chocolatey\bin\choco.exe"
+if exist "%CHOC_PATH%" (
     echo Chocolatey is already installed.
-) else (
-    echo Installing Chocolatey...
-    powershell -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))"
-    if errorlevel 1 (
-        echo Failed to install Chocolatey.
-        goto :end
-    )
-    echo Chocolatey installed successfully.
+)
+if not exist "%CHOC_PATH%" (
+    echo Chocolatey is not installed. Please install it manually from https://chocolatey.org/install ^(administrator rights required^).
 )
 
-:: Check if Scoop is installed
 echo Checking if Scoop is installed...
-where scoop >nul 2>&1
-if !errorlevel! == 0 (
+set "SCOOP_FOUND="
+for /f "delims=" %%I in ('where scoop 2^>nul') do set "SCOOP_FOUND=%%I"
+if defined SCOOP_FOUND (
     echo Scoop is already installed.
 ) else (
-    echo Scoop is not installed. Installing Scoop...
-    powershell -Command "iex (Invoke-WebRequest -Uri get.scoop.sh).Content" -RunAsAdmin
+    echo Scoop is not installed. Attempting installation for the current user...
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "iwr -useb get.scoop.sh | iex"
     if errorlevel 1 (
-        echo Failed to install Scoop.
-        goto :end
+        echo Scoop installation failed. You can install it manually via PowerShell: iwr -useb get.scoop.sh | iex
+    ) else (
+        echo Scoop installed successfully.
     )
-    powershell -Command "Set-ExecutionPolicy RemoteSigned -scope CurrentUser"
-    echo Scoop installed successfully.
 )
 
-:end
 pause

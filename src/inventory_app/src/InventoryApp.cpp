@@ -1,6 +1,6 @@
 /**
- * @file calculatorapp.cpp
- * @brief A simple program to demonstrate the usage of the calculator model class.
+ * @file inventory_app.cpp
+ * @brief A simple program to demonstrate the usage of the InventoryManager model class.
  *
  * This program process infix notations and calculate operations
  *
@@ -12,9 +12,9 @@
 #include <string>
 #include <sstream>
 #include <stdexcept>
-#include "../../calculator/header/calculator.h"  // Adjust this include path based on your project structure
+#include "../../inventory_lib/header/InventoryManager.h"  // Adjust this include path based on your project structure
 
-using namespace Coruh::Calculator;
+using namespace Coruh::Inventory;
 
 bool isOperator(char c) {
     return (c == '+' || c == '-' || c == '*' || c == '/');
@@ -71,14 +71,14 @@ double evaluatePostfix(const std::string& postfix) {
             double result;
 
             switch(token[0]) {
-                case '+': result = Calculator::add(a, b); break;
-                case '-': result = Calculator::subtract(a, b); break;
-                case '*': result = Calculator::multiply(a, b); break;
+                case '+': result = Inventory::add(a, b); break;
+                case '-': result = Inventory::subtract(a, b); break;
+                case '*': result = Inventory::multiply(a, b); break;
                 case '/': 
                     if (b == 0) {
                         throw std::invalid_argument("Division by zero is not allowed.");
                     }
-                    result = Calculator::divide(a, b); break;
+                    result = Inventory::divide(a, b); break;
             }
 
             s.push(result);

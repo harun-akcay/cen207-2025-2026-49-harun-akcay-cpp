@@ -1,4 +1,4 @@
-# Calculator Project Library Generation and Testing Template
+# Simple Inventory Management for Crafters
 
 ## Overview
 

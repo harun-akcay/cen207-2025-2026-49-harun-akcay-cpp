@@ -1,6 +1,13 @@
 @echo off
-@setlocal enableextensions
+@setlocal EnableExtensions
 @cd /d "%~dp0"
+
+call tools\ensure_windows_tools.bat
+if %errorlevel% neq 0 (
+    echo Zorunlu araclar yuklenemedi. Islemler durduruldu.
+    goto :eof
+)
+if not defined DOXYGEN_CMD set "DOXYGEN_CMD=doxygen"
 
 rem Get the current directory path
 for %%A in ("%~dp0.") do (
@@ -36,10 +43,10 @@ echo Generate Documentation
 set STRIP_FROM_PATH=%currentDir%
 
 echo Generate HTML/LATEX/RTF/XML Documentation for Library (No Source Code Only Headers)
-call doxygen DoxyfileLibWin
+call "%DOXYGEN_CMD%" DoxyfileLibWin
 
 echo Generate HTML/LATEX/RTF/XML Documentation for Unit Tests (Test Sources and Test Data Sets)
-call doxygen DoxyfileTestWin
+call "%DOXYGEN_CMD%" DoxyfileTestWin
 
 echo Not: coverxygen uses doxygen xml output for coverage
 
@@ -54,11 +61,11 @@ rem echo Run lcov genhtml
 rem call perl C:\ProgramData\chocolatey\lib\lcov\tools\bin\genhtml --legend --title "Documentation Coverage Report" ./docs/coverxygen/lcov.info -o docs/coverxygen
 
 echo Run Documentation Coverage Report Generator for Library 
-call reportgenerator "-title:Calculator Library Documentation Coverage Report" "-reports:**/lcov_doxygen_lib_win.info" "-targetdir:docs/coverxygenlibwin" "-reporttypes:Html" "-filefilters:-*.md;-*.xml;-*[generated];-*build*" "-historydir:report_doc_lib_hist_win"
+call reportgenerator "-title:Project Inventory Library Documentation Coverage Report" "-reports:**/lcov_doxygen_lib_win.info" "-targetdir:docs/coverxygenlibwin" "-reporttypes:Html" "-filefilters:-*.md;-*.xml;-*[generated];-*build*" "-historydir:report_doc_lib_hist_win"
 call reportgenerator "-reports:**/lcov_doxygen_lib_win.info" "-targetdir:assets/doccoveragelibwin" "-reporttypes:Badges" "-filefilters:-*.md;-*.xml;-*[generated];-*build*"
 
 echo Run Documentation Coverage Report Generator for Unit Tests 
-call reportgenerator "-title:Calculator Library Test Documentation Coverage Report" "-reports:**/lcov_doxygen_test_win.info" "-targetdir:docs/coverxygentestwin" "-reporttypes:Html" "-filefilters:-*.md;-*.xml;-*[generated];-*build*" "-historydir:report_doc_test_hist_win"
+call reportgenerator "-title:Project Inventory Test Documentation Coverage Report" "-reports:**/lcov_doxygen_test_win.info" "-targetdir:docs/coverxygentestwin" "-reporttypes:Html" "-filefilters:-*.md;-*.xml;-*[generated];-*build*" "-historydir:report_doc_test_hist_win"
 call reportgenerator "-reports:**/lcov_doxygen_test_win.info" "-targetdir:assets/doccoveragetestwin" "-reporttypes:Badges" "-filefilters:-*.md;-*.xml;-*[generated];-*build*"
 
 echo Copy the "assets" folder and its contents to "docs" recursively

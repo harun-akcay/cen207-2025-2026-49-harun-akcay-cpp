@@ -1,11 +1,11 @@
 # Project information
-site_name: 'CALCULATOR APP'
+site_name: 'INVENTORYMANAGER APP'
 docs_dir: docs  # Where to find the English markdown files
 site_dir: site  # Where to put the English HTML files
-site_author: 'Asst. Prof. Dr. Uğur CORUH'
+site_author: 'Harun Akcay'
 site_url: 'https://coruhtech.github.io/6g-lock-model-cpp/'
 site_description: >-
-    CALCULATOR APP
+    INVENTORYMANAGER APP
 
 # Repository
 repo_name: 'GitHub'

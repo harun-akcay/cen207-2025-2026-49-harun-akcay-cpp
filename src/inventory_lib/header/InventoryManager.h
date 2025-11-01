@@ -1,23 +1,23 @@
 /**
- * @file calculator.h
+ * @file InventoryManager.h
  * 
  * @brief Provides functions for math. utilities
  */
 
-#ifndef CALCULATOR_H
-#define CALCULATOR_H
+#ifndef INVENTORYMANAGER_H
+#define INVENTORYMANAGER_H
 
 #include "../../utility/header/commonTypes.h"
 
 namespace Coruh
 {
-    namespace Calculator
+    namespace Inventory
     {
         /**
-            @class Calculator
+            @class Inventory
             @brief Provides Basic functions for various operations.
         */
-        class Calculator
+        class Inventory
         {
         public:
             /**
@@ -59,4 +59,4 @@ namespace Coruh
     }
 }
 
-#endif // CALCULATOR_H
+#endif // INVENTORYMANAGER_H
