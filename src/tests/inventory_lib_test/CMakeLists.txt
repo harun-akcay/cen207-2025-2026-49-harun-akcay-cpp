@@ -1,46 +1,17 @@
-# tests/aka5g/CMakeLists.txt
-set(ROOT src/tests)
-set(TESTNAME inventory_lib_test)
-set(EXENAME ${TESTNAME}_tests)
 
-message(STATUS "[${ROOT}/${TESTNAME}] Module Tests...")
 
-# Collect files without having to explicitly list each header and source file
-file(GLOB LIB_HEADERS
-  "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp")
+# Create the test executable
+add_executable(inventory_lib_test InventoryManager_test.cpp)
 
-file(GLOB LIB_SOURCES
-  "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
+# Link the libraries needed for this test:
+target_link_libraries(inventory_lib_test PUBLIC
+    inventory_lib   # Our C library
+    gtest_main      # GoogleTest
+)
 
-# Create named folders for the sources within the project
-source_group("header" FILES ${LIB_HEADERS})
-source_group("src" FILES ${LIB_SOURCES})
+# (All previous LNK2019 fix attempts (like ucrt.lib)
+# have been removed from this file.)
 
-enable_testing()
-
-# Define the target for aka5g tests
-add_executable(${EXENAME} ${LIB_HEADERS} ${LIB_SOURCES})
-
-# Add included headers
-target_include_directories(${EXENAME} PUBLIC
-						   ${CMAKE_CURRENT_SOURCE_DIR}/../../inventory_lib/header
-						   ${CMAKE_CURRENT_SOURCE_DIR})
-
-# Add any dependencies or compile options specific to aka5g tests
-target_link_libraries(${EXENAME} PRIVATE inventory_lib gtest gtest_main)
-
-# Register the test with CTest
-# add_test(NAME ${EXENAME} COMMAND ${EXENAME})
-
-install(TARGETS ${EXENAME}
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION bin )
-
-# Discover tests using CTest
+# Add the test to CTest
 include(GoogleTest)
-gtest_discover_tests(${EXENAME})
-		
-message(STATUS "[${ROOT}/${TESTNAME}] Added target: ${EXENAME}")
+gtest_discover_tests(inventory_lib_test)

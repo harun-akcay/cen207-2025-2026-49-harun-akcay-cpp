@@ -1,41 +1,39 @@
-# crypto/CMakeLists.txt
-set(ROOT src)
-set(LIBNAME inventory_lib)
 
-message(STATUS "[${ROOT}/${LIBNAME}] Module Processing...")
+# Create the library from the C source file
+add_library(inventory_lib src/InventoryManager.c)
 
-# Collect files without having to explicitly list each header and source file
-file(GLOB LIB_HEADERS
-  "${CMAKE_CURRENT_SOURCE_DIR}/header/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/header/*.hpp")
+# Set this library's language to C (NOT C++)
+# This is CRITICAL for the midterm requirements
+set_target_properties(inventory_lib PROPERTIES LANGUAGE C)
 
-file(GLOB LIB_SOURCES
-  "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc")
+# --- Include Directories ---
+target_include_directories(inventory_lib
+    PRIVATE
+        header
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/header>
+        $<INSTALL_INTERFACE:include/inventory_lib>
+)
 
-# Create named folders for the sources within the project
-source_group("header" FILES ${LIB_HEADERS})
-source_group("src" FILES ${LIB_SOURCES})
+# (All previous LNK2019 fix attempts have been removed.
+# The fix is now correctly placed in the root CMakeLists.txt)
 
-# Set Properties->General->Configuration Type to Dynamic Library (.dll/.so/.dylib)
-add_library(${LIBNAME} STATIC ${LIB_HEADERS} ${LIB_SOURCES}) # for dynamic library use SHARED
+# --- Export the library (for other modules to find) ---
+include(GNUInstallDirs)
+install(TARGETS inventory_lib
+    EXPORT inventory_lib-targets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
 
-target_include_directories(${LIBNAME} PUBLIC
-						   ${CMAKE_CURRENT_SOURCE_DIR}/header)
+# Install the header files to 'include/inventory_lib'
+install(DIRECTORY header/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/inventory_lib)
 
-
-
-
-install(TARGETS ${LIBNAME}
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION bin )
-		
-# Copy required header to the installation include folder		
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/header/InventoryManager.h
-        DESTINATION include)
-
-# Export the crypto target so other modules can use it
-# export(TARGETS ${LIBNAME} FILE ${LIBNAME}Targets.cmake)
-
-message(STATUS "[${ROOT}/${LIBNAME}] Added library target: ${LIBNAME}")
+# Generate and install the CMake config files
+install(EXPORT inventory_lib-targets
+    FILE inventory_lib-config.cmake
+    NAMESPACE inventory_lib
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/inventory_lib
+)

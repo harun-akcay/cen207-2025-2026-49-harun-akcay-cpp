@@ -1,57 +1,85 @@
-//#define ENABLE_INVENTORYMANAGER_TEST  // Uncomment this line to enable the Inventory tests
+// src/tests/inventory_lib_test/InventoryManager_test.cpp
 
 #include "gtest/gtest.h"
-#include "../../inventory_lib/header/InventoryManager.h"  // Adjust this include path based on your project structure
 
-using namespace Coruh::Inventory;
+// Include the C library header we are testing
+// The 'extern "C"' block in the header makes this work
+#include "InventoryManager.h"
 
+// A temporary binary file for testing I/O
+const char* TEST_DB_FILE = "test_users.bin";
+
+// Test Fixture: Sets up a clean environment for each test
 class InventoryTest : public ::testing::Test {
 protected:
-	void SetUp() override {
-		// Setup test data
-	}
+    // This runs before each test
+    void SetUp() override {
+        // Delete the test file if it exists from a previous run
+        remove(TEST_DB_FILE);
 
-	void TearDown() override {
-		// Clean up test data
-	}
+        // --- THIS IS THE FIX ---
+        // Call our new C function to reset the in-memory database
+        // instead of the old "non_existent_file" hack.
+        resetUserDatabase();
+    }
+
+    // This runs after each test
+    void TearDown() override {
+        // Clean up the test file
+        remove(TEST_DB_FILE);
+    }
 };
 
-TEST_F(InventoryTest, TestAdd) {
-	double result = Inventory::add(5.0, 3.0);
-	EXPECT_DOUBLE_EQ(result, 8.0);
+// --- Test Cases ---
+// We are in C++ (gtest), but we are calling our C functions.
+
+TEST_F(InventoryTest, UserAuth_CreateUser) {
+    // Call the C function from inventory_lib
+    int result = createUser("testuser", "pass123");
+    ASSERT_EQ(result, 1); // Should return 1 (success)
 }
 
-TEST_F(InventoryTest, TestSubtract) {
-	double result = Inventory::subtract(5.0, 3.0);
-	EXPECT_DOUBLE_EQ(result, 2.0);
+TEST_F(InventoryTest, UserAuth_FindUser) {
+    createUser("testuser", "pass123");
+
+    // Call the C function
+    User* foundUser = findUserByName("testuser");
+    ASSERT_NE(foundUser, nullptr); // Should find the user (not NULL)
+    EXPECT_STREQ(foundUser->username, "testuser");
+    EXPECT_STREQ(foundUser->password, "pass123");
 }
 
-TEST_F(InventoryTest, TestMultiply) {
-	double result = Inventory::multiply(5.0, 3.0);
-	EXPECT_DOUBLE_EQ(result, 15.0);
+TEST_F(InventoryTest, UserAuth_PreventDuplicateUser) {
+    createUser("testuser", "pass123");
+    int result = createUser("testuser", "pass456"); // Add same user again
+    ASSERT_EQ(result, 0); // Should return 0 (failure)
 }
 
-TEST_F(InventoryTest, TestDivide) {
-	double result = Inventory::divide(6.0, 3.0);
-	EXPECT_DOUBLE_EQ(result, 2.0);
-}
+// Test for the critical "Binary File" requirement
+TEST_F(InventoryTest, BinaryIO_SaveAndLoadUsers) {
+    // 1. Create data in memory
+    createUser("user1", "pass1");
+    createUser("user2", "pass2");
 
-TEST_F(InventoryTest, TestDivideByZero) {
-	EXPECT_THROW(Inventory::divide(5.0, 0.0), std::invalid_argument);
-}
+    // 2. Save to binary file (C function)
+    int save_result = saveUsersToBinary(TEST_DB_FILE);
+    ASSERT_EQ(save_result, 1);
 
-/**
- * @brief The main function of the test program.
- *
- * @param argc The number of command-line arguments.
- * @param argv An array of command-line argument strings.
- * @return int The exit status of the program.
- */
-int main(int argc, char** argv) {
-#ifdef ENABLE_INVENTORYMANAGER_TEST
-	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
-#else
-	return 0;
-#endif
+    // 3. Clear memory (simulate app restart)
+    resetUserDatabase(); // Use our reliable reset function
+    User* check_user = findUserByName("user1");
+    ASSERT_EQ(check_user, nullptr); // Should not be in memory
+
+    // 4. Load from binary file (C function)
+    int load_result = loadUsersFromBinary(TEST_DB_FILE);
+    ASSERT_EQ(load_result, 1); // Should return 1 (success, data loaded)
+
+    // 5. Verify data is loaded correctly
+    check_user = findUserByName("user1");
+    ASSERT_NE(check_user, nullptr);
+    EXPECT_STREQ(check_user->username, "user1");
+
+    User* check_user2 = findUserByName("user2");
+    ASSERT_NE(check_user2, nullptr);
+    EXPECT_STREQ(check_user2->username, "user2");
 }
