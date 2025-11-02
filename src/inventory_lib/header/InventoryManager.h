@@ -7,7 +7,6 @@
 #ifndef INVENTORYMANAGER_H
 #define INVENTORYMANAGER_H
 
-#include "../../utility/header/commonTypes.h"
 
 namespace Coruh
 {
