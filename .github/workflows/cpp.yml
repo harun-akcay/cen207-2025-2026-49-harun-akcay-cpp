@@ -450,14 +450,14 @@ jobs:
         shell: cmd
         run: |
             set STRIP_FROM_PATH=%cd%
-            doxygen Doxyfile
+            doxygen DoxyfileLibWin
   
       - name: Generate Documentation on Linux and MacOS
         if: (startsWith(matrix.config.os, 'ubuntu') || startsWith(matrix.config.os, 'macos')) && matrix.config.active == true
         shell: bash
         run: |
             export STRIP_FROM_PATH=$PWD
-            doxygen Doxyfile
+            doxygen DoxyfileLibLinux
     
       # -------------------------------------------------------
       - name: Run Coverxygen
