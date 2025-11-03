@@ -1,11 +1,11 @@
 /**
- * @file calculatorapp.h
- * @brief Calculator Application header file
+ * @file InventoryApp.h
+ * @brief Inventory Management Application header file
  *
  */
 
-#ifndef CALCULATOR_APP_H
-#define CALCULATOR_APP_H
+#ifndef INVENTORY_APP_H
+#define INVENTORY_APP_H
 
 
-#endif // CALCULATOR_APP_H
+#endif // INVENTORY_APP_H
