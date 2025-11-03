@@ -478,9 +478,8 @@ jobs:
         if: matrix.config.active == true  && matrix.config.doccoverage == true
         shell: bash
         run: |
-            reportgenerator "-title:Documentation Coverage Report" "-reports:**/lcov.info" "-targetdir:docs/coverxygen" "-reporttypes:Html" "-filefilters:-*.md;-*.xml;-*[generated]"
-            reportgenerator "-reports:**/lcov.info" "-targetdir:assets/doccoverage" "-reporttypes:Badges" "-filefilters:-*.md;-*.xml;-*[generated]"
-    
+              reportgenerator "-title:Documentation Coverage Report" "-reports:**/lcov*.info" "-targetdir:docs/coverxygen" "-reporttypes:Html" "-filefilters:-*.md;-*.xml;-*[generated]"
+              reportgenerator "-reports:**/lcov*.info" "-targetdir:assets/doccoverage" "-reporttypes:Badges" "-filefilters:-*.md;-*.xml;-*[generated]"
       # -------------------------------------------------------
     
       - name: Generate Test Coverage on Windows
