@@ -464,13 +464,13 @@ jobs:
         if: matrix.config.active == true && matrix.config.doccoverage == true && runner.os == 'Linux'
         shell: bash
         run: |
-          python3 -m coverxygen --xml-dir ./docs/doxygenliblinux/xml --src-dir ./src/inventory_lib --format lcov --output ./docs/coverxygen/lcov_lib.info
+          python3 -m coverxygen --xml-dir ./docs/doxygenliblinux/xml --src-dir ./src/inventory_lib --format lcov --output ./docs/coverxygen/lcov.info
 
       - name: Run Coverxygen (Test)
         if: matrix.config.active == true && matrix.config.doccoverage == true && runner.os == 'Linux'
         shell: bash
         run: |
-          python3 -m coverxygen --xml-dir ./docs/doxygentestlinux/xml --src-dir ./src/tests/inventory_lib_test --format lcov --output ./docs/coverxygen/lcov_test.info
+          python3 -m coverxygen --xml-dir ./docs/doxygentestlinux/xml --src-dir ./src/tests/inventory_lib_test --format lcov --output ./docs/coverxygen/test/lcov.info
 
       # -------------------------------------------------------
     
