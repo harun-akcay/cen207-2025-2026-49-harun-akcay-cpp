@@ -14,13 +14,12 @@ extern "C" {
 
     /**
      * @brief Defines the structure for a user.
-     * This structure will be used for authentication (later with a hash table).
      * @file InventoryManager.h
      */
     typedef struct {
         int id;
         char username[50];
-        char password[50]; // Note: Should be hashed in a real-world app
+        char password[50];
     } User;
 
     /**
@@ -33,51 +32,81 @@ extern "C" {
         double price;
     } Material;
 
-    // --- User Authentication (To be implemented with Hash Table) ---
+
+    // --- Hash Table Data Structures (Requirement 1) ---
 
     /**
-     * @brief Creates a new user and adds them to the database.
+     * @brief A node in the hash table chain.
+     * Contains the User data and a pointer to the next node (for collision handling).
+     */
+    typedef struct HashNode {
+        User user;
+        struct HashNode* next;
+    } HashNode;
+
+    /**
+     * @brief The Hash Table structure.
+     * Contains an array of pointers to HashNodes (the "buckets").
+     */
+    typedef struct {
+        int size;
+        HashNode** table;
+        int element_count; // To track total users
+    } HashTable;
+
+
+    // --- User Authentication Functions (using Hash Table) ---
+
+    /**
+     * @brief Creates a new user and adds them to the hash table.
      * @param username The username for the new user.
      * @param password The password for the new user.
-     * @return 1 on success, 0 on failure (e.g., user exists or db is full).
+     * @return 1 on success, 0 on failure (e.g., user exists).
      */
     int createUser(const char* username, const char* password);
 
     /**
-     * @brief Finds a user by their username.
+     * @brief Finds a user in the hash table by their username.
      * @param username The username to search for.
-     * @return A pointer to the User struct if found, or NULL if not found.
+     * @return A pointer to the *internal* User struct if found, or NULL if not found.
+     * @warning Do not modify the returned pointer; it points to internal data.
      */
     User* findUserByName(const char* username);
+
 
     // --- Binary File Operations (Critical Requirement) ---
 
     /**
-     * @brief Saves all user data from memory to a binary file.
+     * @brief Saves all user data from the hash table to a binary file.
      * @param filename The name of the binary file (e.g., "users.bin").
-     * @return 1 on success, 0 on failure (e.g., file cannot be opened).
+     * @return 1 on success, 0 on failure.
      */
     int saveUsersToBinary(const char* filename);
 
     /**
-     * @brief Loads all user data from a binary file into memory.
-     * This will overwrite any existing user data in memory.
+     * @brief Loads all user data from a binary file into the hash table.
      * @param filename The name of the binary file (e.g., "users.bin").
-     * @return 1 on success (if data was read), 0 on failure (e.g., file not found or empty).
+     * @return 1 on success (if data was read), 0 on failure.
      */
-    int loadUsersFromBinary(const char* filename);
+    int loadUsersToBinary(const char* filename);
 
 
-    // --- Test Utility Functions ---
+    // --- Test Utility Functions (DO NOT USE IN APP) ---
 
     /**
-     * @brief Resets the in-memory user database.
-     * THIS FUNCTION SHOULD ONLY BE USED FOR TESTING PURPOSES.
+     * @brief Initializes the global user hash table.
+     * FOR TESTING: This clears any existing table and creates a new one.
      */
-    void resetUserDatabase();
+    void ht_init_user_table();
+
+    /**
+     * @brief Frees all memory associated with the global user hash table.
+     * FOR TESTING: This is used to clean up after tests.
+     */
+    void ht_free_user_table();
 
 
-    // Close the 'extern "C"' block for C++ compatibility
+    // Close the 'extern "C"' block
 #ifdef __cplusplus
 }
 #endif
