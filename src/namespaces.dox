@@ -11,15 +11,8 @@
  */
  
  /**
- * @namespace Coruh::Utility
- * @brief Namespace for general utility functions and classes.
+ * @namespace Coruh::Inventory
+ * @brief Namespace for inventory management functions and classes.
  *
- * This namespace contains a collection of utility functions and classes that provide commonly-used functionality.
- */
-
- /**
- * @namespace Coruh::Calculator
- * @brief Namespace for calculator functions and classes.
- *
- * This namespace contains a collection of calculator functions and classes that provide commonly-used functionality.
+ * This namespace contains a collection of inventory management functions and classes that provide commonly-used functionality for crafters.
  */

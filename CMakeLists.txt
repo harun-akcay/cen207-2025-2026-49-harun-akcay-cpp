@@ -1,7 +1,7 @@
 # Set the minimum required CMake version
 cmake_minimum_required(VERSION 3.12)
-project(calculatorapp)
-
+project(inventory_app)
+enable_language(C CXX)
 set(ROOT src)
 
 # Print useful information
@@ -9,10 +9,11 @@ message(STATUS "[${ROOT}] CMake version ${CMAKE_VERSION}")
 message(STATUS "[${ROOT}] System ${CMAKE_SYSTEM_NAME}")
 message(STATUS "[${ROOT}] Processor ${CMAKE_SYSTEM_PROCESSOR}")
 
-# GoogleTest requires at least C++11
+# GoogleTest requires at least C11
 if(NOT "${CMAKE_CXX_STANDARD}")
-  set(CMAKE_CXX_STANDARD 11)
-  message(STATUS "[${ROOT}] Default C++ Standard Selected: ${CMAKE_CXX_STANDARD}")
+  set(CMAKE_C_STANDARD 11)
+  set(CMAKE_C_STANDARD_REQUIRED ON)
+  message(STATUS "[${ROOT}] C standard version: ${CMAKE_C_STANDARD}")
 endif()
 
 message(STATUS "[${ROOT}] C++ standard version: ${CMAKE_CXX_STANDARD}")
@@ -39,19 +40,16 @@ set(CRYPTOPP_INSTALL ON)
 set(CRYPTOPP_BUILD_SHARED OFF)
 set(CRYPTOPP_USE_MASTER_BRANCH FALSE)
 
-option(ENABLE_UTILITY "Enable Utility Module" ON)
-option(ENABLE_CALCULATOR "Enable Calculator Module" ON)
-option(ENABLE_CALCULATOR_APP "Enable Calculator Application" ON)
+option(ENABLE_INVENTORYMANAGER "Enable Inventory Module" ON)
+option(ENABLE_INVENTORYMANAGER_APP "Enable Inventory Application" ON)
 option(ENABLE_TESTS "Enable All Tests" ON)
 
 # Configure tests
-add_compile_definitions(ENABLE_UTILITY_TEST)
-add_compile_definitions(ENABLE_CALCULATOR_TEST)
+add_compile_definitions(ENABLE_INVENTORYMANAGER_TEST)
 
 
 # Configure logs
-add_compile_definitions(ENABLE_UTILITY_LOGGER)
-add_compile_definitions(ENABLE_CALCULATOR_LOGGER)
+add_compile_definitions(ENABLE_INVENTORYMANAGER_LOGGER)
 
 # Set the output directories for Debug and Release configurations
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/build/Debug)
@@ -95,19 +93,14 @@ endif()
 
 
 
-# Utility submodule
-if(ENABLE_UTILITY)
-	add_subdirectory(${ROOT}/utility)
+# Inventory Library submodule
+if(ENABLE_INVENTORYMANAGER)
+	add_subdirectory(${ROOT}/inventory_lib)
 endif()
 
-# Logger submodule
-if(ENABLE_CALCULATOR)
-	add_subdirectory(${ROOT}/calculator)
-endif()
-
-# BigInteger for Crypto submodule
-if(ENABLE_CALCULATOR_APP)
-	add_subdirectory(${ROOT}/calculatorapp)
+# Inventory Application submodule
+if(ENABLE_INVENTORYMANAGER_APP)
+	add_subdirectory(${ROOT}/inventory_app)
 endif()
 
 # Tests

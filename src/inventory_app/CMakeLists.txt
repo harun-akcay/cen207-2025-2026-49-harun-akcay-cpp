@@ -1,6 +1,6 @@
-# aka5g/CMakeLists.txt
+# inventory_app/CMakeLists.txt
 set(ROOT src)
-set(APPNAME calculatorapp)
+set(APPNAME inventory_app)
 
 message(STATUS "[${ROOT}/${APPNAME}] Module Processing...")
 
@@ -10,6 +10,7 @@ file(GLOB APP_HEADERS
   "${CMAKE_CURRENT_SOURCE_DIR}/header/*.hpp")
 
 file(GLOB APP_SOURCES
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc")
 
@@ -17,16 +18,15 @@ file(GLOB APP_SOURCES
 source_group("header" FILES ${APP_HEADERS})
 source_group("src" FILES ${APP_SOURCES})
 
-# Set Properties->General->Configuration Type to Dynamic Library (.dll/.so/.dylib)
-add_executable(${APPNAME} ${APP_HEADERS} ${APP_SOURCES}) # for dynamic library use SHARED
+# Set Properties->General->Configuration Type to Executable
+add_executable(${APPNAME} ${APP_HEADERS} ${APP_SOURCES})
 
 target_include_directories(${APPNAME} PUBLIC
-						   ${CMAKE_CURRENT_SOURCE_DIR}/../utility/header
-						   ${CMAKE_CURRENT_SOURCE_DIR}/../calculator/header
+						   ${CMAKE_CURRENT_SOURCE_DIR}/../inventory_lib/header
 						   ${CMAKE_CURRENT_SOURCE_DIR}/header)
 
-# Add any dependencies or compile options specific to lock6g
-target_link_libraries(${APPNAME} PRIVATE calculator utility)
+# Add any dependencies or compile options specific to inventory_app
+target_link_libraries(${APPNAME} PRIVATE inventory_lib)
 
 install(TARGETS ${APPNAME}
         LIBRARY DESTINATION lib

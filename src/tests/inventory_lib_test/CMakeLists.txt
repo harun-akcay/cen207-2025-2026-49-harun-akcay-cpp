@@ -1,6 +1,6 @@
-# tests/aka5g/CMakeLists.txt
+# tests/inventory_lib_test/CMakeLists.txt
 set(ROOT src/tests)
-set(TESTNAME utility)
+set(TESTNAME inventory_lib)
 set(EXENAME ${TESTNAME}_tests)
 
 message(STATUS "[${ROOT}/${TESTNAME}] Module Tests...")
@@ -20,19 +20,19 @@ source_group("src" FILES ${LIB_SOURCES})
 
 enable_testing()
 
-# Define the target for aka5g tests
+# Define the target for inventory_lib tests
 add_executable(${EXENAME} ${LIB_HEADERS} ${LIB_SOURCES})
 
 # Add included headers
 target_include_directories(${EXENAME} PUBLIC
-              ${CMAKE_CURRENT_SOURCE_DIR}/../../utility/header
+						   ${CMAKE_CURRENT_SOURCE_DIR}/../../inventory_lib/header
 						   ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Add any dependencies or compile options specific to aka5g tests
-target_link_libraries(${EXENAME} PRIVATE utility gtest gtest_main)
+# Add any dependencies or compile options specific to inventory_lib tests
+target_link_libraries(${EXENAME} PRIVATE inventory_lib gtest gtest_main)
 
 # Register the test with CTest
-add_test(NAME ${EXENAME} COMMAND ${EXENAME})
+# add_test(NAME ${EXENAME} COMMAND ${EXENAME})
 
 install(TARGETS ${EXENAME}
         LIBRARY DESTINATION lib

@@ -359,35 +359,35 @@ jobs:
             ctest --config Release --output-on-failure
             cd ..
 
-      - name: Run tests executable on Windows on Release
-        if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true
-        shell: bash
-        run: |
-            status=$?
-            cmd="build/build/Release/calculator_test"
-            $cmd
-            status=$?
-            [ $status -eq 0 ] && exit 0 || exit 1  
+              - name: Run tests executable on Windows on Release
+          if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true
+          shell: bash
+          run: |
+              status=$?
+              cmd="build/build/Release/inventory_lib_tests"
+              $cmd
+              status=$?
+              [ $status -eq 0 ] && exit 0 || exit 1  
 
-      - name: Run tests executable on MacOS Release
-        if: startsWith(matrix.config.os, 'macos') && matrix.config.active == true
-        shell: bash
-        run: |
-            status=$?
-            cmd="build/build/Release/calculator_test"
-            $cmd
-            status=$?
-            [ $status -eq 0 ] && exit 0 || exit 1
+              - name: Run tests executable on MacOS Release
+          if: startsWith(matrix.config.os, 'macos') && matrix.config.active == true
+          shell: bash
+          run: |
+              status=$?
+              cmd="build/build/Release/inventory_lib_tests"
+              $cmd
+              status=$?
+              [ $status -eq 0 ] && exit 0 || exit 1
   
-      - name: Run tests executable on Ubuntu Release
-        if: startsWith(matrix.config.name, 'ubuntu') && matrix.config.active == true
-        shell: bash
-        run: |
-            status=$?
-            cmd="./build/build/Release/calculator_test"
-            $cmd
-            status=$?
-            [ $status -eq 0 ] && exit 0 || exit 1
+              - name: Run tests executable on Ubuntu Release
+          if: startsWith(matrix.config.name, 'ubuntu') && matrix.config.active == true
+          shell: bash
+          run: |
+              status=$?
+              cmd="./build/build/Release/inventory_lib_tests"
+              $cmd
+              status=$?
+              [ $status -eq 0 ] && exit 0 || exit 1
 
       # --------------------------------------------
           
@@ -408,35 +408,35 @@ jobs:
             ctest --config Debug --output-on-failure
             cd ..
 
-      - name: Run tests executable on Windows on Debug
-        if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true
-        shell: bash
-        run: |
-            status=$?
-            cmd="build/build/Debug/calculator_test"
-            $cmd
-            status=$?
-            [ $status -eq 0 ] && exit 0 || exit 1  
+              - name: Run tests executable on Windows on Debug
+          if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true
+          shell: bash
+          run: |
+              status=$?
+              cmd="build/build/Debug/inventory_lib_tests"
+              $cmd
+              status=$?
+              [ $status -eq 0 ] && exit 0 || exit 1  
 
-      - name: Run tests executable on MacOS Debug
-        if: startsWith(matrix.config.os, 'macos') && matrix.config.active == true
-        shell: bash
-        run: |
-            status=$?
-            cmd="build/build/Debug/calculator_test"
-            $cmd
-            status=$?
-            [ $status -eq 0 ] && exit 0 || exit 1
+              - name: Run tests executable on MacOS Debug
+          if: startsWith(matrix.config.os, 'macos') && matrix.config.active == true
+          shell: bash
+          run: |
+              status=$?
+              cmd="build/build/Debug/inventory_lib_tests"
+              $cmd
+              status=$?
+              [ $status -eq 0 ] && exit 0 || exit 1
   
-      - name: Run tests executable on Ubuntu Debug
-        if: startsWith(matrix.config.name, 'ubuntu') && matrix.config.active == true
-        shell: bash
-        run: |
-            status=$?
-            cmd="./build/build/Debug/calculator_test"
-            $cmd
-            status=$?
-            [ $status -eq 0 ] && exit 0 || exit 1
+              - name: Run tests executable on Ubuntu Debug
+          if: startsWith(matrix.config.name, 'ubuntu') && matrix.config.active == true
+          shell: bash
+          run: |
+              status=$?
+              cmd="./build/build/Debug/inventory_lib_tests"
+              $cmd
+              status=$?
+              [ $status -eq 0 ] && exit 0 || exit 1
 
       # -------------------------------------------------------
       - name: Install Strip
@@ -481,7 +481,7 @@ jobs:
         if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true && matrix.config.testcoverage == true
         shell: cmd
         run: |
-            OpenCppCoverage.exe --export_type=cobertura:cobertura.xml --sources calculator\application\src --sources calculator\application\header --sources calculator\library\src --sources calculator\library\header  --sources calculator\tests\src -- build\build\Debug\calculator_test.exe
+            OpenCppCoverage.exe --export_type=cobertura:cobertura.xml --sources src\inventory_app\src --sources src\inventory_app\header --sources src\inventory_lib\src --sources src\inventory_lib\header  --sources src\tests\inventory_lib_test -- build\build\Debug\inventory_lib_tests.exe
   
       - name: Generate Test Coverage on Ubuntu and MacOS
         if: (startsWith(matrix.config.os, 'ubuntu') || startsWith(matrix.config.os, 'macos')) && matrix.config.active == true  && matrix.config.testcoverage == true
@@ -496,19 +496,19 @@ jobs:
             
       # -------------------------------------------------------
     
-      - name: Generate Test Report on Windows
-        if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true  && matrix.config.testcoverage == true
-        shell: cmd
-        run: |
-            call reportgenerator "-title:Test Coverage Report" "-reports:**/cobertura.xml" "-sourcedirs:calculator/application/src;calculator/application/header;calculator/library/src;calculator/library/header;calculator/tests/src" "-targetdir:docs/coveragereport" -reporttypes:Html -filefilters:-*minkernel\*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h
-            call reportgenerator "-reports:**/cobertura.xml" "-sourcedirs:calculator/application/src;calculator/application/header;calculator/library/src;calculator/library/header;calculator/tests/src" "-targetdir:assets/codecoverage" -reporttypes:Badges -filefilters:-*minkernel\*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h
+              - name: Generate Test Report on Windows
+          if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true  && matrix.config.testcoverage == true
+          shell: cmd
+          run: |
+            call reportgenerator "-title:Test Coverage Report" "-reports:**/cobertura.xml" "-sourcedirs:src/inventory_app/src;src/inventory_app/header;src/inventory_lib/src;src/inventory_lib/header;src/tests/inventory_lib_test" "-targetdir:docs/coveragereport" -reporttypes:Html -filefilters:-*minkernel\*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h
+            call reportgenerator "-reports:**/cobertura.xml" "-sourcedirs:src/inventory_app/src;src/inventory_app/header;src/inventory_lib/src;src/inventory_lib/header;src/tests/inventory_lib_test" "-targetdir:assets/codecoverage" -reporttypes:Badges -filefilters:-*minkernel\*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h
   
-      - name: Generate Test Report on Ubuntu and MacOS
-        if: (startsWith(matrix.config.os, 'ubuntu') || startsWith(matrix.config.os, 'macos')) && matrix.config.active == true  && matrix.config.testcoverage == true
-        shell: bash
-        run: |
-            reportgenerator "-title:Test Coverage Report" "-reports:**/coverage.info" "-sourcedirs:calculator/application/src;calculator/application/header;calculator/library/src;calculator/library/header;calculator/tests/src" "-targetdir:docs/coveragereport" "-reporttypes:Html" "-filefilters:-*Xcode*;-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h"
-            reportgenerator "-reports:**/coverage.info" "-sourcedirs:calculator/application/src;calculator/application/header;calculator/library/src;calculator/library/header;calculator/tests/src" "-targetdir:assets/codecoverage" "-reporttypes:Badges" "-filefilters:-*Xcode*;-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h"
+              - name: Generate Test Report on Ubuntu and MacOS
+          if: (startsWith(matrix.config.os, 'ubuntu') || startsWith(matrix.config.os, 'macos')) && matrix.config.active == true  && matrix.config.testcoverage == true
+          shell: bash
+          run: |
+            reportgenerator "-title:Test Coverage Report" "-reports:**/coverage.info" "-sourcedirs:src/inventory_app/src;src/inventory_app/header;src/inventory_lib/src;src/inventory_lib/header;src/tests/inventory_lib_test" "-targetdir:docs/coveragereport" "-reporttypes:Html" "-filefilters:-*Xcode*;-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h"
+            reportgenerator "-reports:**/coverage.info" "-sourcedirs:src/inventory_app/src;src/inventory_app/header;src/inventory_lib/src;src/inventory_lib/header;src/tests/inventory_lib_test" "-targetdir:assets/codecoverage" "-reporttypes:Badges" "-filefilters:-*Xcode*;-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h"
   
       # -------------------------------------------------------
 
@@ -518,7 +518,7 @@ jobs:
         run: |
             call robocopy assets "docs\assets" /E
             call copy README.md "docs\index.md"
-            call robocopy calculator\library\header "build\build\Release" /E
+            call robocopy src\inventory_lib\header "build\build\Release" /E
             exit /B 0
     
       - name: Copy Webpage Files on Ubuntu/MacOS
@@ -526,7 +526,7 @@ jobs:
         run: |
             cp -R assets docs/
             cp README.md docs/index.md
-            cp -R calculator/library/header build/build/Release/
+            cp -R src/inventory_lib/header build/build/Release/
           
         # -------------------------------------------------------
         
