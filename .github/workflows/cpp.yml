@@ -364,7 +364,7 @@ jobs:
         shell: bash
         run: |
             status=$?
-            cmd="build/build/Release/InventoryManager_test"
+            cmd="build/build/Release/inventory_lib_test"
             $cmd
             status=$?
             [ $status -eq 0 ] && exit 0 || exit 1  
@@ -374,7 +374,7 @@ jobs:
         shell: bash
         run: |
             status=$?
-            cmd="build/build/Release/InventoryManager_test"
+            cmd="build/build/Release/inventory_lib_test"
             $cmd
             status=$?
             [ $status -eq 0 ] && exit 0 || exit 1
@@ -384,7 +384,7 @@ jobs:
         shell: bash
         run: |
             status=$?
-            cmd="./build/build/Release/InventoryManager_test"
+            cmd="./build/build/Release/inventory_lib_test"
             $cmd
             status=$?
             [ $status -eq 0 ] && exit 0 || exit 1
@@ -413,7 +413,7 @@ jobs:
         shell: bash
         run: |
             status=$?
-            cmd="build/build/Debug/InventoryManager_test"
+            cmd="build/build/Debug/inventory_lib_test"
             $cmd
             status=$?
             [ $status -eq 0 ] && exit 0 || exit 1  
@@ -423,7 +423,7 @@ jobs:
         shell: bash
         run: |
             status=$?
-            cmd="build/build/Debug/InventoryManager_test"
+            cmd="build/build/Debug/inventory_lib_test"
             $cmd
             status=$?
             [ $status -eq 0 ] && exit 0 || exit 1
@@ -433,7 +433,7 @@ jobs:
         shell: bash
         run: |
             status=$?
-            cmd="./build/build/Debug/InventoryManager_test"
+            cmd="./build/build/Debug/inventory_lib_test"
             $cmd
             status=$?
             [ $status -eq 0 ] && exit 0 || exit 1
@@ -481,7 +481,7 @@ jobs:
         if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true && matrix.config.testcoverage == true
         shell: cmd
         run: |
-            OpenCppCoverage.exe --export_type=cobertura:cobertura.xml --sources InventoryManager\application\src --sources InventoryManager\application\header --sources InventoryManager\library\src --sources InventoryManager\library\header  --sources InventoryManager\tests\src -- build\build\Debug\InventoryManager_test.exe
+            OpenCppCoverage.exe --export_type=cobertura:cobertura.xml --sources InventoryManager\application\src --sources InventoryManager\application\header --sources InventoryManager\library\src --sources InventoryManager\library\header  --sources InventoryManager\tests\src -- build\build\Debug\inventory_lib_test.exe
   
       - name: Generate Test Coverage on Ubuntu and MacOS
         if: (startsWith(matrix.config.os, 'ubuntu') || startsWith(matrix.config.os, 'macos')) && matrix.config.active == true  && matrix.config.testcoverage == true
