@@ -356,7 +356,7 @@ jobs:
             cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=17 -G "${{ matrix.config.generators }}" -DCMAKE_INSTALL_PREFIX:PATH=publish
             cmake --build build --config Release
             cd build
-            ctest --config Release --output-on-failure
+            ctest --build-config Release --output-on-failure
             cd ..
 
       - name: Run tests executable on Windows on Release
@@ -405,7 +405,7 @@ jobs:
             cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=17 -G "${{ matrix.config.generators }}" -DCMAKE_INSTALL_PREFIX:PATH=publish
             cmake --build build --config Debug
             cd build
-            ctest --config Debug --output-on-failure
+            ctest --build-config Debug --output-on-failure
             cd ..
 
       - name: Run tests executable on Windows on Debug
