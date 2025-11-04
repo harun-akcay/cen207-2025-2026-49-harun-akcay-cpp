@@ -988,3 +988,7 @@ coverage*[.json, .xml, .info]
 /docs/assets/doccoverageliblinux
 /docs/assets/doccoveragetestwin
 /docs/assets
+
+# Binary data files
+*.bin
+users.bin
