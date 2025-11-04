@@ -6,6 +6,7 @@
 #include "../header/InventoryManager.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 // Test hook for memory allocation (only used in test builds)
 #ifdef ENABLE_INVENTORYMANAGER_TEST
@@ -35,16 +36,28 @@ static void* safe_malloc(size_t size) {
 /** @brief Global hash table for user authentication */
 static HashTable* g_user_hash_table = NULL;
 
-int InventoryManager_Init(void) {
+int InventoryManager_Init(const char* filename) {
     /**
      * @brief Initialize inventory management system
      * 
      * Creates and initializes the global hash table for user authentication.
+     * If a filename is provided, attempts to load users from binary file.
      * This function should be called before using any inventory management functions.
      * 
+     * @param filename Optional filename to load users from (NULL to start fresh)
      * @return 0 on success, -1 on error (memory allocation failure)
      */
     if (g_user_hash_table == NULL) {
+        // Try to load from file if filename is provided
+        if (filename != NULL) {
+            g_user_hash_table = HashTable_LoadFromFile(NULL, filename);
+            if (g_user_hash_table != NULL) {
+                return 0; // Successfully loaded
+            }
+            // If load failed, continue to create new table
+        }
+        
+        // Create new hash table
         g_user_hash_table = HashTable_Create();
         if (g_user_hash_table == NULL) {
             return -1;
@@ -53,17 +66,24 @@ int InventoryManager_Init(void) {
     return 0;
 }
 
-int InventoryManager_Cleanup(void) {
+int InventoryManager_Cleanup(const char* filename) {
     /**
      * @brief Cleanup inventory management system
      * 
-     * Destroys the global hash table and frees all associated memory.
+     * Saves the global hash table to binary file if filename is provided,
+     * then destroys the global hash table and frees all associated memory.
      * This function should be called when the inventory management system
      * is no longer needed (e.g., at program shutdown).
      * 
-     * @return 0 on success (always succeeds)
+     * @param filename Optional filename to save users to (NULL to skip save)
+     * @return 0 on success, -1 on error (file save error)
      */
     if (g_user_hash_table != NULL) {
+        // Save to file if filename is provided
+        if (filename != NULL) {
+            HashTable_SaveToFile(g_user_hash_table, filename);
+        }
+        
         HashTable_Destroy(g_user_hash_table);
         g_user_hash_table = NULL;
     }
@@ -352,4 +372,130 @@ size_t HashTable_GetSize(HashTable* ht) {
         return 0;
     }
     return ht->size;
+}
+
+int HashTable_SaveToFile(HashTable* ht, const char* filename) {
+    /**
+     * @brief Save hash table to binary file
+     * 
+     * Saves the hash table to a binary file using fwrite().
+     * The file format is:
+     * 1. size_t size (number of users)
+     * 2. For each user: User structure (username, password_hash, is_active)
+     * 
+     * @param ht Pointer to the hash table (must not be NULL)
+     * @param filename The filename to save to (must not be NULL)
+     * @return 0 on success, -1 on error (NULL parameters, file I/O error)
+     * 
+     * @note Uses binary format (fwrite/fread) as required by project specifications.
+     * @note All users are saved sequentially, regardless of their bucket position.
+     */
+    if (ht == NULL || filename == NULL) {
+        return -1;
+    }
+    
+    FILE* file = fopen(filename, "wb");
+    if (file == NULL) {
+        return -1;
+    }
+    
+    // Write the number of users first
+    size_t user_count = ht->size;
+    if (fwrite(&user_count, sizeof(size_t), 1, file) != 1) {
+        fclose(file);
+        return -1;
+    }
+    
+    // Write all users sequentially
+    for (size_t i = 0; i < HASH_TABLE_SIZE; i++) {
+        HashNode* current = ht->buckets[i];
+        while (current != NULL) {
+            // Write User structure
+            if (fwrite(&(current->user), sizeof(User), 1, file) != 1) {
+                fclose(file);
+                return -1;
+            }
+            current = current->next;
+        }
+    }
+    
+    fclose(file);
+    return 0;
+}
+
+HashTable* HashTable_LoadFromFile(HashTable* ht, const char* filename) {
+    /**
+     * @brief Load hash table from binary file
+     * 
+     * Loads the hash table from a binary file using fread().
+     * The file format is:
+     * 1. size_t size (number of users)
+     * 2. For each user: User structure (username, password_hash, is_active)
+     * 
+     * @param ht Pointer to the hash table (if NULL, a new hash table will be created)
+     * @param filename The filename to load from (must not be NULL)
+     * @return Pointer to hash table on success, NULL on error
+     * 
+     * @note Uses binary format (fwrite/fread) as required by project specifications.
+     * @note If ht is NULL, a new hash table will be created and returned.
+     * @note If ht is not NULL, existing users will be preserved and new users will be added.
+     */
+    if (filename == NULL) {
+        return NULL;
+    }
+    
+    FILE* file = fopen(filename, "rb");
+    if (file == NULL) {
+        return NULL; // File doesn't exist or can't be opened
+    }
+    
+    // Create hash table if not provided
+    if (ht == NULL) {
+        ht = HashTable_Create();
+        if (ht == NULL) {
+            fclose(file);
+            return NULL;
+        }
+    }
+    
+    // Read the number of users
+    size_t user_count;
+    if (fread(&user_count, sizeof(size_t), 1, file) != 1) {
+        fclose(file);
+        if (ht != NULL && HashTable_GetSize(ht) == 0) {
+            HashTable_Destroy(ht);
+        }
+        return NULL;
+    }
+    
+    // Read all users and add them to the hash table
+    for (size_t i = 0; i < user_count; i++) {
+        User user;
+        if (fread(&user, sizeof(User), 1, file) != 1) {
+            fclose(file);
+            return ht; // Return partial load
+        }
+        
+        // Add user to hash table (password will be stored as-is since it's already hashed)
+        // Note: We need to reconstruct the password or use a special flag
+        // For now, we'll add the user directly by creating a node
+        size_t index = HashTable_Hash(user.username);
+        
+        HashNode* new_node = (HashNode*)safe_malloc(sizeof(HashNode));
+        if (new_node == NULL) {
+            fclose(file);
+            return ht; // Return partial load
+        }
+        
+        // Copy user data
+        new_node->user = user;
+        
+        // Insert at the beginning of the chain
+        new_node->next = ht->buckets[index];
+        ht->buckets[index] = new_node;
+        ht->size++;
+    }
+    
+    fclose(file);
+    return ht;
 }

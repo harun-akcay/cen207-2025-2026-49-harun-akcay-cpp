@@ -67,28 +67,28 @@ protected:
 };
 
 TEST_F(InventoryManagerTest, TestInit) {
-	int result = InventoryManager_Init();
+	int result = InventoryManager_Init(NULL);
 	EXPECT_EQ(result, 0);
 	
 	// Cleanup after test
-	InventoryManager_Cleanup();
+	InventoryManager_Cleanup(NULL);
 }
 
 TEST_F(InventoryManagerTest, TestCleanup) {
 	// Initialize first
-	int init_result = InventoryManager_Init();
+	int init_result = InventoryManager_Init(NULL);
 	EXPECT_EQ(init_result, 0);
 	
 	// Then cleanup
-	int cleanup_result = InventoryManager_Cleanup();
+	int cleanup_result = InventoryManager_Cleanup(NULL);
 	EXPECT_EQ(cleanup_result, 0);
 }
 
 TEST_F(InventoryManagerTest, TestInitCleanupSequence) {
 	// Test that we can initialize and cleanup multiple times
 	for (int i = 0; i < 3; ++i) {
-		EXPECT_EQ(InventoryManager_Init(), 0);
-		EXPECT_EQ(InventoryManager_Cleanup(), 0);
+		EXPECT_EQ(InventoryManager_Init(NULL), 0);
+		EXPECT_EQ(InventoryManager_Cleanup(NULL), 0);
 	}
 }
 
@@ -485,14 +485,14 @@ TEST_F(InventoryManagerTest, InventoryManager_InitHashTableCreateFailure) {
 	InventoryManager_SetMallocHook(mock_malloc_hook);
 	
 	// This should fail because HashTable_Create will fail
-	int result = InventoryManager_Init();
+	int result = InventoryManager_Init(NULL);
 	EXPECT_EQ(result, -1);
 	
 	InventoryManager_SetMallocHook(NULL);
 	mock_malloc_reset();
 	
 	// Cleanup in case Init partially succeeded
-	InventoryManager_Cleanup();
+	InventoryManager_Cleanup(NULL);
 }
 
 TEST_F(InventoryManagerTest, HashTable_CreateMallocFailure) {
@@ -532,6 +532,143 @@ TEST_F(InventoryManagerTest, HashTable_AddUserNodeMallocFailure) {
 	mock_malloc_reset();
 	
 	HashTable_Destroy(ht);
+}
+
+// Binary File Operations Tests
+
+TEST_F(InventoryManagerTest, HashTable_SaveToFile) {
+	HashTable* ht = HashTable_Create();
+	EXPECT_NE(ht, nullptr);
+	
+	// Add some users
+	EXPECT_EQ(HashTable_AddUser(ht, "user1", "pass1"), 0);
+	EXPECT_EQ(HashTable_AddUser(ht, "user2", "pass2"), 0);
+	EXPECT_EQ(HashTable_AddUser(ht, "user3", "pass3"), 0);
+	EXPECT_EQ(HashTable_GetSize(ht), 3);
+	
+	// Save to file
+	const char* filename = "test_users.bin";
+	int result = HashTable_SaveToFile(ht, filename);
+	EXPECT_EQ(result, 0);
+	
+	HashTable_Destroy(ht);
+	
+	// Clean up test file
+	remove(filename);
+}
+
+TEST_F(InventoryManagerTest, HashTable_LoadFromFile) {
+	HashTable* ht = HashTable_Create();
+	EXPECT_NE(ht, nullptr);
+	
+	// Add some users
+	EXPECT_EQ(HashTable_AddUser(ht, "user1", "pass1"), 0);
+	EXPECT_EQ(HashTable_AddUser(ht, "user2", "pass2"), 0);
+	EXPECT_EQ(HashTable_AddUser(ht, "user3", "pass3"), 0);
+	
+	// Save to file
+	const char* filename = "test_users_load.bin";
+	EXPECT_EQ(HashTable_SaveToFile(ht, filename), 0);
+	
+	// Destroy original table
+	HashTable_Destroy(ht);
+	
+	// Load from file
+	ht = HashTable_LoadFromFile(NULL, filename);
+	EXPECT_NE(ht, nullptr);
+	EXPECT_EQ(HashTable_GetSize(ht), 3);
+	
+	// Verify users exist
+	EXPECT_NE(HashTable_FindUser(ht, "user1"), nullptr);
+	EXPECT_NE(HashTable_FindUser(ht, "user2"), nullptr);
+	EXPECT_NE(HashTable_FindUser(ht, "user3"), nullptr);
+	
+	HashTable_Destroy(ht);
+	
+	// Clean up test file
+	remove(filename);
+}
+
+TEST_F(InventoryManagerTest, HashTable_SaveLoadRoundTrip) {
+	HashTable* ht = HashTable_Create();
+	EXPECT_NE(ht, nullptr);
+	
+	// Add many users
+	for (int i = 0; i < 50; ++i) {
+		char username[32];
+		char password[32];
+		std::snprintf(username, sizeof(username), "user%d", i);
+		std::snprintf(password, sizeof(password), "pass%d", i);
+		EXPECT_EQ(HashTable_AddUser(ht, username, password), 0);
+	}
+	EXPECT_EQ(HashTable_GetSize(ht), 50);
+	
+	// Save to file
+	const char* filename = "test_users_roundtrip.bin";
+	EXPECT_EQ(HashTable_SaveToFile(ht, filename), 0);
+	
+	// Destroy original table
+	HashTable_Destroy(ht);
+	
+	// Load from file
+	ht = HashTable_LoadFromFile(NULL, filename);
+	EXPECT_NE(ht, nullptr);
+	EXPECT_EQ(HashTable_GetSize(ht), 50);
+	
+	// Verify all users exist and can authenticate
+	for (int i = 0; i < 50; ++i) {
+		char username[32];
+		char password[32];
+		std::snprintf(username, sizeof(username), "user%d", i);
+		std::snprintf(password, sizeof(password), "pass%d", i);
+		EXPECT_NE(HashTable_FindUser(ht, username), nullptr);
+		EXPECT_EQ(HashTable_Authenticate(ht, username, password), 1);
+	}
+	
+	HashTable_Destroy(ht);
+	
+	// Clean up test file
+	remove(filename);
+}
+
+TEST_F(InventoryManagerTest, HashTable_SaveToFileNULLParams) {
+	// Test with NULL hash table
+	EXPECT_EQ(HashTable_SaveToFile(NULL, "test.bin"), -1);
+	
+	// Test with NULL filename
+	HashTable* ht = HashTable_Create();
+	EXPECT_NE(ht, nullptr);
+	EXPECT_EQ(HashTable_SaveToFile(ht, NULL), -1);
+	HashTable_Destroy(ht);
+}
+
+TEST_F(InventoryManagerTest, HashTable_LoadFromFileNonExistent) {
+	// Try to load from non-existent file
+	HashTable* ht = HashTable_LoadFromFile(NULL, "nonexistent.bin");
+	EXPECT_EQ(ht, nullptr);
+}
+
+TEST_F(InventoryManagerTest, HashTable_SaveLoadEmpty) {
+	HashTable* ht = HashTable_Create();
+	EXPECT_NE(ht, nullptr);
+	EXPECT_EQ(HashTable_GetSize(ht), 0);
+	
+	// Save empty table
+	const char* filename = "test_empty.bin";
+	EXPECT_EQ(HashTable_SaveToFile(ht, filename), 0);
+	
+	// Destroy original table
+	HashTable_Destroy(ht);
+	
+	// Load empty table
+	ht = HashTable_LoadFromFile(NULL, filename);
+	EXPECT_NE(ht, nullptr);
+	EXPECT_EQ(HashTable_GetSize(ht), 0);
+	
+	HashTable_Destroy(ht);
+	
+	// Clean up test file
+	remove(filename);
 }
 
 

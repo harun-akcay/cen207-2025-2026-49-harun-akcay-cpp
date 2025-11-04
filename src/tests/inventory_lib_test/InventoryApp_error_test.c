@@ -40,7 +40,7 @@ static void test_init_failure(void) {
     InventoryManager_SetMallocHook(mock_malloc_hook);
     
     // This should fail and trigger error path (lines 31-32)
-    if (InventoryManager_Init() != 0) {
+    if (InventoryManager_Init(NULL) != 0) {
         fprintf(stderr, "Error: Failed to initialize inventory management system\n");
         // Simulates return EXIT_FAILURE; (line 32)
     }
@@ -68,7 +68,7 @@ static void test_cleanup_warning(void) {
     printf("Testing cleanup warning path...\n");
     
     // Initialize normally first
-    if (InventoryManager_Init() != 0) {
+    if (InventoryManager_Init(NULL) != 0) {
         fprintf(stderr, "Error: Failed to initialize inventory management system\n");
         return;
     }
@@ -89,7 +89,7 @@ static void test_cleanup_warning(void) {
     mock_malloc_reset();
     
     // Normal cleanup
-    if (InventoryManager_Cleanup() != 0) {
+    if (InventoryManager_Cleanup(NULL) != 0) {
         fprintf(stderr, "Warning: Failed to cleanup inventory management system\n");
         // This covers line 40
     }

@@ -26,17 +26,17 @@ int main(void) {
     printf("Inventory Management System for Crafters\n");
     printf("========================================\n\n");
 
-    // Initialize the inventory management system
-    if (InventoryManager_Init() != 0) {
+    // Initialize the inventory management system (load from users.bin if exists)
+    if (InventoryManager_Init("users.bin") != 0) {
         fprintf(stderr, "Error: Failed to initialize inventory management system\n");
         return EXIT_FAILURE;
-}
+    }
 
     printf("Inventory management system initialized successfully.\n");
     printf("TODO: Implement inventory management features.\n");
 
-    // Cleanup the inventory management system
-    if (InventoryManager_Cleanup() != 0) {
+    // Cleanup the inventory management system (save to users.bin)
+    if (InventoryManager_Cleanup("users.bin") != 0) {
         fprintf(stderr, "Warning: Failed to cleanup inventory management system\n");
     }
 

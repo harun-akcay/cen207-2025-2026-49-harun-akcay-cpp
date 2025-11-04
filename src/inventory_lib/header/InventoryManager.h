@@ -80,15 +80,17 @@ typedef struct {
 
 /**
  * @brief Initialize the inventory management system.
+ * @param filename Optional filename to load users from (NULL to start fresh).
  * @return 0 on success, -1 on error.
  */
-int InventoryManager_Init(void);
+int InventoryManager_Init(const char* filename);
 
 /**
  * @brief Cleanup the inventory management system.
+ * @param filename Optional filename to save users to (NULL to skip save).
  * @return 0 on success, -1 on error.
  */
-int InventoryManager_Cleanup(void);
+int InventoryManager_Cleanup(const char* filename);
 
 #ifdef ENABLE_INVENTORYMANAGER_TEST
 /**
@@ -169,6 +171,28 @@ size_t HashTable_GetSize(HashTable* ht);
  * @return Hash value.
  */
 uint32_t HashTable_HashPassword(const char* password);
+
+/**
+ * @brief Save hash table to binary file.
+ * @param ht Pointer to the hash table.
+ * @param filename The filename to save to.
+ * @return 0 on success, -1 on error.
+ * 
+ * @note Uses binary format (fwrite/fread) as required.
+ * @note File format: First writes size, then writes each user sequentially.
+ */
+int HashTable_SaveToFile(HashTable* ht, const char* filename);
+
+/**
+ * @brief Load hash table from binary file.
+ * @param ht Pointer to the hash table (will be created if NULL).
+ * @param filename The filename to load from.
+ * @return Pointer to hash table on success, NULL on error.
+ * 
+ * @note Uses binary format (fwrite/fread) as required.
+ * @note If ht is NULL, a new hash table will be created.
+ */
+HashTable* HashTable_LoadFromFile(HashTable* ht, const char* filename);
 
 #ifdef __cplusplus
 }
