@@ -14,33 +14,69 @@
 extern "C" {
 #endif
 
-// Hash Table for User Authentication
+/**
+ * @defgroup HashTable Hash Table Implementation
+ * @brief Hash Table data structure for user authentication
+ * @{
+ */
+
+/**
+ * @def HASH_TABLE_SIZE
+ * @brief Size of the hash table (prime number for better distribution)
+ * 
+ * Using a prime number helps reduce collisions when using modulo operation.
+ * 101 is a good choice for small to medium-sized user bases.
+ */
 #define HASH_TABLE_SIZE 101  // Prime number for better distribution
 
 /**
  * @brief User structure for authentication
+ * 
+ * Represents a user account in the inventory management system.
+ * Stores username, hashed password, and active status.
  */
 typedef struct {
+    /** @brief Username string (maximum 63 characters + null terminator) */
     char username[64];
+    /** @brief Hashed password value using djb2 algorithm
+     * 
+     * @warning In production, use proper password hashing (e.g., bcrypt, Argon2)
+     * instead of simple hash functions for security.
+     */
     uint32_t password_hash;  // Simple hash, in production use proper password hashing
+    /** @brief Active status flag (1 = active, 0 = inactive) */
     int is_active;
 } User;
 
 /**
  * @brief Hash Table Node structure
+ * 
+ * Represents a single entry in the hash table. Uses chaining for collision handling.
+ * Each node contains a User and a pointer to the next node in the chain.
  */
 typedef struct HashNode {
+    /** @brief User data stored in this node */
     User user;
+    /** @brief Pointer to the next node in the collision chain (NULL if last node) */
     struct HashNode* next;  // For chaining (collision handling)
 } HashNode;
 
 /**
  * @brief Hash Table structure
+ * 
+ * Main hash table data structure that stores users using hash buckets.
+ * Uses separate chaining to handle collisions.
  */
 typedef struct {
+    /** @brief Array of hash buckets (each bucket is a linked list of HashNodes) */
     HashNode* buckets[HASH_TABLE_SIZE];
+    /** @brief Current number of users stored in the hash table */
     size_t size;  // Number of users in the table
 } HashTable;
+
+/**
+ * @}
+ */
 
 /**
  * @brief Initialize the inventory management system.
@@ -53,6 +89,17 @@ int InventoryManager_Init(void);
  * @return 0 on success, -1 on error.
  */
 int InventoryManager_Cleanup(void);
+
+#ifdef ENABLE_INVENTORYMANAGER_TEST
+/**
+ * @brief Set test malloc hook (for testing only)
+ * @param hook Function pointer to malloc replacement, or NULL to use standard malloc
+ * 
+ * This function is only available in test builds and allows tests to inject
+ * a custom malloc implementation for testing memory allocation failures.
+ */
+void InventoryManager_SetMallocHook(void* (*hook)(size_t));
+#endif
 
 // Hash Table Functions for User Authentication
 

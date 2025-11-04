@@ -359,35 +359,35 @@ jobs:
             ctest --config Release --output-on-failure
             cd ..
 
-              - name: Run tests executable on Windows on Release
-          if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true
-          shell: bash
-          run: |
-              status=$?
+      - name: Run tests executable on Windows on Release
+        if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true
+        shell: bash
+        run: |
+            status=$?
               cmd="build/build/Release/inventory_lib_tests"
-              $cmd
-              status=$?
-              [ $status -eq 0 ] && exit 0 || exit 1  
+            $cmd
+            status=$?
+            [ $status -eq 0 ] && exit 0 || exit 1  
 
-              - name: Run tests executable on MacOS Release
-          if: startsWith(matrix.config.os, 'macos') && matrix.config.active == true
-          shell: bash
-          run: |
-              status=$?
+      - name: Run tests executable on MacOS Release
+        if: startsWith(matrix.config.os, 'macos') && matrix.config.active == true
+        shell: bash
+        run: |
+            status=$?
               cmd="build/build/Release/inventory_lib_tests"
-              $cmd
-              status=$?
-              [ $status -eq 0 ] && exit 0 || exit 1
+            $cmd
+            status=$?
+            [ $status -eq 0 ] && exit 0 || exit 1
   
-              - name: Run tests executable on Ubuntu Release
-          if: startsWith(matrix.config.name, 'ubuntu') && matrix.config.active == true
-          shell: bash
-          run: |
-              status=$?
+      - name: Run tests executable on Ubuntu Release
+        if: startsWith(matrix.config.name, 'ubuntu') && matrix.config.active == true
+        shell: bash
+        run: |
+            status=$?
               cmd="./build/build/Release/inventory_lib_tests"
-              $cmd
-              status=$?
-              [ $status -eq 0 ] && exit 0 || exit 1
+            $cmd
+            status=$?
+            [ $status -eq 0 ] && exit 0 || exit 1
 
       # --------------------------------------------
           
@@ -408,35 +408,35 @@ jobs:
             ctest --config Debug --output-on-failure
             cd ..
 
-              - name: Run tests executable on Windows on Debug
-          if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true
-          shell: bash
-          run: |
-              status=$?
+      - name: Run tests executable on Windows on Debug
+        if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true
+        shell: bash
+        run: |
+            status=$?
               cmd="build/build/Debug/inventory_lib_tests"
-              $cmd
-              status=$?
-              [ $status -eq 0 ] && exit 0 || exit 1  
+            $cmd
+            status=$?
+            [ $status -eq 0 ] && exit 0 || exit 1  
 
-              - name: Run tests executable on MacOS Debug
-          if: startsWith(matrix.config.os, 'macos') && matrix.config.active == true
-          shell: bash
-          run: |
-              status=$?
+      - name: Run tests executable on MacOS Debug
+        if: startsWith(matrix.config.os, 'macos') && matrix.config.active == true
+        shell: bash
+        run: |
+            status=$?
               cmd="build/build/Debug/inventory_lib_tests"
-              $cmd
-              status=$?
-              [ $status -eq 0 ] && exit 0 || exit 1
+            $cmd
+            status=$?
+            [ $status -eq 0 ] && exit 0 || exit 1
   
-              - name: Run tests executable on Ubuntu Debug
-          if: startsWith(matrix.config.name, 'ubuntu') && matrix.config.active == true
-          shell: bash
-          run: |
-              status=$?
+      - name: Run tests executable on Ubuntu Debug
+        if: startsWith(matrix.config.name, 'ubuntu') && matrix.config.active == true
+        shell: bash
+        run: |
+            status=$?
               cmd="./build/build/Debug/inventory_lib_tests"
-              $cmd
-              status=$?
-              [ $status -eq 0 ] && exit 0 || exit 1
+            $cmd
+            status=$?
+            [ $status -eq 0 ] && exit 0 || exit 1
 
       # -------------------------------------------------------
       - name: Install Strip
@@ -496,17 +496,17 @@ jobs:
             
       # -------------------------------------------------------
     
-              - name: Generate Test Report on Windows
-          if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true  && matrix.config.testcoverage == true
-          shell: cmd
-          run: |
+      - name: Generate Test Report on Windows
+        if: startsWith(matrix.config.os, 'windows') && matrix.config.active == true  && matrix.config.testcoverage == true
+        shell: cmd
+        run: |
             call reportgenerator "-title:Test Coverage Report" "-reports:**/cobertura.xml" "-sourcedirs:src/inventory_app/src;src/inventory_app/header;src/inventory_lib/src;src/inventory_lib/header;src/tests/inventory_lib_test" "-targetdir:docs/coveragereport" -reporttypes:Html -filefilters:-*minkernel\*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h
             call reportgenerator "-reports:**/cobertura.xml" "-sourcedirs:src/inventory_app/src;src/inventory_app/header;src/inventory_lib/src;src/inventory_lib/header;src/tests/inventory_lib_test" "-targetdir:assets/codecoverage" -reporttypes:Badges -filefilters:-*minkernel\*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h
   
-              - name: Generate Test Report on Ubuntu and MacOS
-          if: (startsWith(matrix.config.os, 'ubuntu') || startsWith(matrix.config.os, 'macos')) && matrix.config.active == true  && matrix.config.testcoverage == true
-          shell: bash
-          run: |
+      - name: Generate Test Report on Ubuntu and MacOS
+        if: (startsWith(matrix.config.os, 'ubuntu') || startsWith(matrix.config.os, 'macos')) && matrix.config.active == true  && matrix.config.testcoverage == true
+        shell: bash
+        run: |
             reportgenerator "-title:Test Coverage Report" "-reports:**/coverage.info" "-sourcedirs:src/inventory_app/src;src/inventory_app/header;src/inventory_lib/src;src/inventory_lib/header;src/tests/inventory_lib_test" "-targetdir:docs/coveragereport" "-reporttypes:Html" "-filefilters:-*Xcode*;-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h"
             reportgenerator "-reports:**/coverage.info" "-sourcedirs:src/inventory_app/src;src/inventory_app/header;src/inventory_lib/src;src/inventory_lib/header;src/tests/inventory_lib_test" "-targetdir:assets/codecoverage" "-reporttypes:Badges" "-filefilters:-*Xcode*;-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h"
   

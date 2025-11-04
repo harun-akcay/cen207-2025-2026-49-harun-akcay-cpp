@@ -12,7 +12,11 @@ file(GLOB LIB_HEADERS
 
 file(GLOB LIB_SOURCES
   "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
+  "${CMAKE_CURRENT_SOURCE_DIR}/*.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
+
+# Exclude error test file from main test executable
+list(REMOVE_ITEM LIB_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/InventoryApp_error_test.c")
 
 # Create named folders for the sources within the project
 source_group("header" FILES ${LIB_HEADERS})
@@ -42,5 +46,15 @@ install(TARGETS ${EXENAME}
 # Discover tests using CTest
 include(GoogleTest)
 gtest_discover_tests(${EXENAME})
+
+# Add error path test executable for InventoryApp.c
+add_executable(inventory_app_error_test InventoryApp_error_test.c mock_malloc.c)
+target_include_directories(inventory_app_error_test PUBLIC
+						   ${CMAKE_CURRENT_SOURCE_DIR}/../../inventory_lib/header
+						   ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(inventory_app_error_test PRIVATE inventory_lib)
+install(TARGETS inventory_app_error_test
+        RUNTIME DESTINATION bin)
 		
 message(STATUS "[${ROOT}/${TESTNAME}] Added target: ${EXENAME}")
+message(STATUS "[${ROOT}/${TESTNAME}] Added error path test: inventory_app_error_test")

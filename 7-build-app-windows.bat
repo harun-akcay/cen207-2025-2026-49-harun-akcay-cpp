@@ -45,10 +45,10 @@ call doxygen DoxyfileTestWin
 echo Not: coverxygen uses doxygen xml output for coverage
 
 echo Run Documentation Coverage Data Collector for Library (No Source Code Only Headers)
-call python -m coverxygen --xml-dir ./docs/doxygenlibwin/xml --src-dir ./ --format lcov --output ./docs/coverxygenlibwin/lcov_doxygen_lib_win.info
+call py -m coverxygen --xml-dir ./docs/doxygenlibwin/xml --src-dir ./ --format lcov --output ./docs/coverxygenlibwin/lcov_doxygen_lib_win.info
 
 echo Run Documentation Coverage Data Collector for Unit Tests (Test Sources and Test Data Sets)
-call python -m coverxygen --xml-dir ./docs/doxygentestwin/xml --src-dir ./ --format lcov --output ./docs/coverxygentestwin/lcov_doxygen_test_win.info
+call py -m coverxygen --xml-dir ./docs/doxygentestwin/xml --src-dir ./ --format lcov --output ./docs/coverxygentestwin/lcov_doxygen_test_win.info
 rem call python -m coverxygen --xml-dir ./docs/doxygen/xml --src-dir ./ --format lcov --output ./docs/coverxygen/lcov.info --prefix %currentDir%\
 
 rem echo Run lcov genhtml
@@ -86,9 +86,16 @@ call OpenCppCoverage.exe --export_type=binary:inventory_lib_tests_unit_win.cov -
 echo Generate Test Coverage Data for Inventory App and Combine Results
 call OpenCppCoverage.exe --input_coverage=inventory_lib_tests_unit_win.cov --export_type=cobertura:inventory_app_unit_win_cobertura.xml --sources src\inventory_lib\src --sources src\inventory_lib\header --sources src\inventory_app\src --sources src\inventory_app\header --sources src\tests\inventory_lib_test -- build_win\build\Debug\inventory_app.exe
 
+
+echo Generate Test Coverage Data for Inventory App Error Test
+call OpenCppCoverage.exe --input_coverage=inventory_app_unit_win_cobertura.xml --export_type=cobertura:inventory_app_error_test_unit_win_cobertura.xml --sources src\inventory_lib\src --sources src\inventory_lib\header --sources src\inventory_app\src --sources src\inventory_app\header --sources src\tests\inventory_lib_test -- build_win\build\Debug\inventory_app_error_test.exe
 echo Generate Unit Test Coverage Report
-call reportgenerator "-title:Inventory Management Library Unit Test Coverage Report (Windows)" "-targetdir:docs/coveragereportlibwin" "-reporttypes:Html" "-reports:**/inventory_app_unit_win_cobertura.xml" "-sourcedirs:src/inventory_lib/src;src/inventory_lib/header;src/inventory_app/src;src/inventory_app/header;src/tests/inventory_lib_test" "-filefilters:-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h;-*build*" "-historydir:report_test_hist_win"
-call reportgenerator "-targetdir:assets/codecoveragelibwin" "-reporttypes:Badges" "-reports:**/inventory_app_unit_win_cobertura.xml" "-sourcedirs:src/inventory_lib/src;src/inventory_lib/header;src/inventory_app/src;src/inventory_app/header;src/tests/inventory_lib_test" "-filefilters:-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h;-*build*"
+call reportgenerator "-title:Inventory Management Library Unit Test Coverage Report (Windows)" "-targetdir:docs/coveragereportlibwin" "-reporttypes:Html" "-reports:**/inventory_app_unit_win_cobertura.xml;**/inventory_app_error_test_unit_win_cobertura.xml" "-sourcedirs:src/inventory_lib/src;src/inventory_lib/header;src/inventory_app/src;src/inventory_app/header;src/tests/inventory_lib_test" "-filefilters:-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h;-*build*" "-historydir:report_test_hist_win"
+call reportgenerator "-targetdir:assets/codecoveragelibwin" "-reporttypes:Badges" "-reports:**/inventory_app_unit_win_cobertura.xml;**/inventory_app_error_test_unit_win_cobertura.xml" "-sourcedirs:src/inventory_lib/src;src/inventory_lib/header;src/inventory_app/src;src/inventory_app/header;src/tests/inventory_lib_test" "-filefilters:-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h;-*build*"
+
+echo Generate Test Source Coverage Report
+call reportgenerator "-title:Inventory Management Library Test Source Coverage Report (Windows)" "-targetdir:docs/coveragereporttestwin" "-reporttypes:Html" "-reports:**/inventory_app_unit_win_cobertura.xml" "-sourcedirs:src/tests/inventory_lib_test" "-filefilters:-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h;-*build*" "-historydir:report_test_source_hist_win"
+call reportgenerator "-targetdir:assets/codecoveragetestwin" "-reporttypes:Badges" "-reports:**/inventory_app_unit_win_cobertura.xml" "-sourcedirs:src/tests/inventory_lib_test" "-filefilters:-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h;-*build*"
 
 echo Copy the "assets" folder and its contents to "docs" recursively
 call robocopy assets "docs\assets" /E
@@ -131,6 +138,9 @@ tar -czvf release_win\windows-debug-binaries.tar.gz -C build_win\build\Debug .
 
 echo Package Publish Test Coverage Report
 tar -czvf release_win\windows-test-coverage-report.tar.gz -C docs\coveragereportlibwin .
+
+echo Package Publish Test Source Coverage Report
+tar -czvf release_win\windows-test-source-coverage-report.tar.gz -C docs\coveragereporttestwin .
 
 echo Package Publish Library Doc Coverage Report
 tar -czvf release_win\windows-lib-doc-coverage-report.tar.gz -C docs\coverxygenlibwin .

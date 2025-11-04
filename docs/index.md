@@ -1,4 +1,4 @@
-# Simple Inventory Management for Crafters - C Project
+# Calculator Project Library Generation and Testing Template
 
 ## Overview
 
@@ -7,7 +7,7 @@ This project provides a suite of modules aimed to show how Cmake used with Ctest
 ## Requirements
 
 - CMake >= 3.12
-- C++ Standard >= 11
+- C Standard >= 11
 - GoogleTest (for testing modules)
 - Visual Studio Communit Edition for Windows Generator
 - Ninja for WSL/Linux
