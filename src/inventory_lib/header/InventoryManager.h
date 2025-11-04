@@ -9,6 +9,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "MaterialInventory.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,6 +74,60 @@ typedef struct {
     /** @brief Current number of users stored in the hash table */
     size_t size;  // Number of users in the table
 } HashTable;
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup Stack Stack Implementation
+ * @brief Stack data structure for login history tracking
+ * @{
+ */
+
+/**
+ * @def MAX_STACK_SIZE
+ * @brief Maximum number of login history entries
+ */
+#define MAX_STACK_SIZE 100
+
+/**
+ * @brief Login history entry structure
+ * 
+ * Represents a single login event in the history.
+ */
+typedef struct {
+    /** @brief Username that logged in */
+    char username[64];
+    /** @brief Timestamp of login (simple counter, can be replaced with time_t) */
+    uint32_t timestamp;
+} LoginHistoryEntry;
+
+/**
+ * @brief Stack node structure
+ * 
+ * Represents a single entry in the login history stack.
+ */
+typedef struct StackNode {
+    /** @brief Login history entry data */
+    LoginHistoryEntry entry;
+    /** @brief Pointer to the next node in the stack (NULL if bottom) */
+    struct StackNode* next;
+} StackNode;
+
+/**
+ * @brief Stack structure for login history
+ * 
+ * LIFO (Last In, First Out) data structure for tracking login history.
+ */
+typedef struct {
+    /** @brief Pointer to the top of the stack (NULL if empty) */
+    StackNode* top;
+    /** @brief Current number of entries in the stack */
+    size_t size;
+    /** @brief Maximum capacity of the stack */
+    size_t capacity;
+} LoginHistoryStack;
 
 /**
  * @}
@@ -193,6 +248,123 @@ int HashTable_SaveToFile(HashTable* ht, const char* filename);
  * @note If ht is NULL, a new hash table will be created.
  */
 HashTable* HashTable_LoadFromFile(HashTable* ht, const char* filename);
+
+// Stack Functions for Login History
+
+/**
+ * @brief Create a new login history stack.
+ * @param capacity Maximum number of entries (0 for default MAX_STACK_SIZE).
+ * @return Pointer to the stack, or NULL on error.
+ */
+LoginHistoryStack* LoginHistoryStack_Create(size_t capacity);
+
+/**
+ * @brief Destroy a login history stack and free all memory.
+ * @param stack Pointer to the stack.
+ */
+void LoginHistoryStack_Destroy(LoginHistoryStack* stack);
+
+/**
+ * @brief Push a login entry onto the stack.
+ * @param stack Pointer to the stack.
+ * @param username The username that logged in.
+ * @return 0 on success, -1 on error (stack full or NULL parameters).
+ */
+int LoginHistoryStack_Push(LoginHistoryStack* stack, const char* username);
+
+/**
+ * @brief Pop a login entry from the stack.
+ * @param stack Pointer to the stack.
+ * @param entry Pointer to store the popped entry (can be NULL).
+ * @return 0 on success, -1 on error (stack empty or NULL stack).
+ */
+int LoginHistoryStack_Pop(LoginHistoryStack* stack, LoginHistoryEntry* entry);
+
+/**
+ * @brief Peek at the top entry without removing it.
+ * @param stack Pointer to the stack.
+ * @param entry Pointer to store the top entry.
+ * @return 0 on success, -1 on error (stack empty or NULL parameters).
+ */
+int LoginHistoryStack_Peek(LoginHistoryStack* stack, LoginHistoryEntry* entry);
+
+/**
+ * @brief Check if stack is empty.
+ * @param stack Pointer to the stack.
+ * @return 1 if empty, 0 if not empty, -1 if NULL.
+ */
+int LoginHistoryStack_IsEmpty(LoginHistoryStack* stack);
+
+/**
+ * @brief Get the number of entries in the stack.
+ * @param stack Pointer to the stack.
+ * @return Number of entries, or 0 if NULL.
+ */
+size_t LoginHistoryStack_GetSize(LoginHistoryStack* stack);
+
+/**
+ * @brief Get the global login history stack.
+ * @return Pointer to the global stack, or NULL if not initialized.
+ */
+LoginHistoryStack* InventoryManager_GetLoginHistory(void);
+
+/**
+ * @brief Add a login entry to the global history.
+ * @param username The username that logged in.
+ * @return 0 on success, -1 on error.
+ */
+int InventoryManager_AddLoginHistory(const char* username);
+
+/**
+ * @brief View recent login history.
+ * @param count Number of recent entries to display (0 for all).
+ * @return 0 on success, -1 on error.
+ */
+int InventoryManager_ViewLoginHistory(size_t count);
+
+/**
+ * @brief Get the global hash table for user operations.
+ * @return Pointer to the global hash table, or NULL if not initialized.
+ */
+HashTable* InventoryManager_GetHashTable(void);
+
+/**
+ * @brief Register a new user (wrapper function).
+ * @param username The username (max 63 characters).
+ * @param password The password.
+ * @return 0 on success, -1 on error.
+ */
+int InventoryManager_RegisterUser(const char* username, const char* password);
+
+/**
+ * @brief Login a user (wrapper function with history tracking).
+ * @param username The username.
+ * @param password The password.
+ * @return 1 if authentication successful, 0 otherwise.
+ */
+int InventoryManager_LoginUser(const char* username, const char* password);
+
+// Material Inventory Management Functions
+
+/**
+ * @brief Get the global material list.
+ * @return Pointer to the global material list, or NULL if not initialized.
+ */
+MaterialList* InventoryManager_GetMaterialList(void);
+
+/**
+ * @brief Initialize material inventory (load from file if exists).
+ * @param filename Optional filename to load materials from (NULL to start fresh).
+ * @return 0 on success, -1 on error.
+ */
+int InventoryManager_InitMaterialInventory(const char* filename);
+
+/**
+ * @brief Cleanup material inventory (save to file).
+ * @param filename Optional filename to save materials to (NULL to skip save).
+ * @return 0 on success, -1 on error.
+ */
+int InventoryManager_CleanupMaterialInventory(const char* filename);
 
 #ifdef __cplusplus
 }

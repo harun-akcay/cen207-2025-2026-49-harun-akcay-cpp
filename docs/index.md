@@ -1,8 +1,8 @@
-# Calculator Project Library Generation and Testing Template
+# Simple Inventory Management for Crafters - CEN207 Data Structures Project
 
 ## Overview
 
-This project provides a suite of modules aimed to show how Cmake used with Ctest. Also combines doxygen documentation and test coverage reports
+This project implements a console-based inventory management system for crafters using C programming language. The system provides material inventory tracking, project management, expense logging, and sales tracking capabilities. It demonstrates various data structures (Double Linked List, Hash Table, etc.) and binary file operations.
 
 ## Requirements
 

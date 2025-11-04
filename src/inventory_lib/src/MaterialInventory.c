@@ -11,11 +11,11 @@
 
 // Test hook for memory allocation (only used in test builds)
 #ifdef ENABLE_INVENTORYMANAGER_TEST
+// Forward declaration - test_malloc_hook is defined in InventoryManager.c
 extern void* (*test_malloc_hook)(size_t);
 
 // Internal malloc wrapper that uses test hook if available
 static void* safe_malloc(size_t size) {
-    extern void* (*test_malloc_hook)(size_t);
     if (test_malloc_hook != NULL) {
         return test_malloc_hook(size);
     }

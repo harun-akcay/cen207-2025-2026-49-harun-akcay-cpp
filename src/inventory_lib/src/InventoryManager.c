@@ -4,14 +4,20 @@
  */
 
 #include "../header/InventoryManager.h"
+#include "../header/MaterialInventory.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
+// Disable MSVC warnings for deprecated functions (strncpy, etc.)
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 // Test hook for memory allocation (only used in test builds)
 #ifdef ENABLE_INVENTORYMANAGER_TEST
-// Function pointer for test malloc override
-static void* (*test_malloc_hook)(size_t) = NULL;
+// Function pointer for test malloc override (shared between InventoryManager.c and MaterialInventory.c)
+void* (*test_malloc_hook)(size_t) = NULL;
 
 /**
  * @brief Set test malloc hook (for testing only)
@@ -36,11 +42,21 @@ static void* safe_malloc(size_t size) {
 /** @brief Global hash table for user authentication */
 static HashTable* g_user_hash_table = NULL;
 
+/** @brief Global login history stack */
+static LoginHistoryStack* g_login_history = NULL;
+
+/** @brief Timestamp counter for login history */
+static uint32_t g_timestamp_counter = 1;
+
+/** @brief Global material list for inventory */
+static MaterialList* g_material_list = NULL;
+
 int InventoryManager_Init(const char* filename) {
     /**
      * @brief Initialize inventory management system
      * 
-     * Creates and initializes the global hash table for user authentication.
+     * Creates and initializes the global hash table for user authentication
+     * and the global login history stack.
      * If a filename is provided, attempts to load users from binary file.
      * This function should be called before using any inventory management functions.
      * 
@@ -52,6 +68,13 @@ int InventoryManager_Init(const char* filename) {
         if (filename != NULL) {
             g_user_hash_table = HashTable_LoadFromFile(NULL, filename);
             if (g_user_hash_table != NULL) {
+                // Initialize login history stack
+                if (g_login_history == NULL) {
+                    g_login_history = LoginHistoryStack_Create(MAX_STACK_SIZE);
+                    if (g_login_history == NULL) {
+                        return -1;
+                    }
+                }
                 return 0; // Successfully loaded
             }
             // If load failed, continue to create new table
@@ -63,6 +86,22 @@ int InventoryManager_Init(const char* filename) {
             return -1;
         }
     }
+    
+    // Initialize login history stack if not already initialized
+    if (g_login_history == NULL) {
+        g_login_history = LoginHistoryStack_Create(MAX_STACK_SIZE);
+        if (g_login_history == NULL) {
+            return -1;
+        }
+    }
+    
+    // Initialize material inventory if not already initialized
+    if (g_material_list == NULL) {
+        if (InventoryManager_InitMaterialInventory("materials.bin") != 0) {
+            return -1;
+        }
+    }
+    
     return 0;
 }
 
@@ -71,7 +110,8 @@ int InventoryManager_Cleanup(const char* filename) {
      * @brief Cleanup inventory management system
      * 
      * Saves the global hash table to binary file if filename is provided,
-     * then destroys the global hash table and frees all associated memory.
+     * then destroys the global hash table and login history stack, freeing
+     * all associated memory.
      * This function should be called when the inventory management system
      * is no longer needed (e.g., at program shutdown).
      * 
@@ -87,6 +127,19 @@ int InventoryManager_Cleanup(const char* filename) {
         HashTable_Destroy(g_user_hash_table);
         g_user_hash_table = NULL;
     }
+    
+    // Cleanup login history stack
+    if (g_login_history != NULL) {
+        LoginHistoryStack_Destroy(g_login_history);
+        g_login_history = NULL;
+    }
+    
+    // Cleanup material inventory
+    if (g_material_list != NULL) {
+        InventoryManager_CleanupMaterialInventory("materials.bin");
+        g_material_list = NULL;
+    }
+    
     return 0;
 }
 
@@ -498,4 +551,382 @@ HashTable* HashTable_LoadFromFile(HashTable* ht, const char* filename) {
     
     fclose(file);
     return ht;
+}
+
+// Stack Implementation for Login History
+
+LoginHistoryStack* LoginHistoryStack_Create(size_t capacity) {
+    /**
+     * @brief Create a new login history stack
+     * 
+     * Allocates memory for a new login history stack and initializes it.
+     * The stack is ready to use after creation.
+     * 
+     * @param capacity Maximum number of entries (0 for default MAX_STACK_SIZE)
+     * @return Pointer to the newly created stack, or NULL on memory allocation failure
+     * 
+     * @note The caller is responsible for destroying the stack using LoginHistoryStack_Destroy()
+     * to avoid memory leaks.
+     */
+    LoginHistoryStack* stack = (LoginHistoryStack*)safe_malloc(sizeof(LoginHistoryStack));
+    if (stack == NULL) {
+        return NULL;
+    }
+    
+    stack->top = NULL;
+    stack->size = 0;
+    stack->capacity = (capacity == 0) ? MAX_STACK_SIZE : capacity;
+    
+    return stack;
+}
+
+void LoginHistoryStack_Destroy(LoginHistoryStack* stack) {
+    /**
+     * @brief Destroy a login history stack and free all memory
+     * 
+     * Frees all nodes in the stack and then frees the stack structure itself.
+     * This function is safe to call with NULL pointer (no-op).
+     * 
+     * @param stack Pointer to the stack to destroy (can be NULL)
+     * 
+     * @note After calling this function, the stack pointer becomes invalid
+     * and should not be used.
+     */
+    if (stack == NULL) {
+        return;
+    }
+    
+    // Pop all entries
+    while (stack->top != NULL) {
+        StackNode* temp = stack->top;
+        stack->top = stack->top->next;
+        free(temp);
+    }
+    
+    free(stack);
+}
+
+int LoginHistoryStack_Push(LoginHistoryStack* stack, const char* username) {
+    /**
+     * @brief Push a login entry onto the stack
+     * 
+     * Adds a new login history entry to the top of the stack.
+     * If the stack is full, the oldest entry (bottom) is removed.
+     * 
+     * @param stack Pointer to the stack (must not be NULL)
+     * @param username The username that logged in (must not be NULL)
+     * @return 0 on success, -1 on error (NULL parameters or stack full)
+     */
+    if (stack == NULL || username == NULL) {
+        return -1;
+    }
+    
+    // If stack is full, remove oldest entry (bottom)
+    if (stack->size >= stack->capacity) {
+        // Find the second-to-last node
+        if (stack->top != NULL && stack->top->next != NULL) {
+            StackNode* current = stack->top;
+            while (current->next->next != NULL) {
+                current = current->next;
+            }
+            // Remove the last node
+            free(current->next);
+            current->next = NULL;
+            stack->size--;
+        } else if (stack->top != NULL) {
+            // Only one node, remove it
+            free(stack->top);
+            stack->top = NULL;
+            stack->size = 0;
+        }
+    }
+    
+    // Create new node
+    StackNode* new_node = (StackNode*)safe_malloc(sizeof(StackNode));
+    if (new_node == NULL) {
+        return -1;
+    }
+    
+    // Initialize entry
+    strncpy(new_node->entry.username, username, sizeof(new_node->entry.username) - 1);
+    new_node->entry.username[sizeof(new_node->entry.username) - 1] = '\0';
+    new_node->entry.timestamp = g_timestamp_counter++;
+    
+    // Push to top
+    new_node->next = stack->top;
+    stack->top = new_node;
+    stack->size++;
+    
+    return 0;
+}
+
+int LoginHistoryStack_Pop(LoginHistoryStack* stack, LoginHistoryEntry* entry) {
+    /**
+     * @brief Pop a login entry from the stack
+     * 
+     * Removes and returns the top entry from the stack (LIFO).
+     * 
+     * @param stack Pointer to the stack (must not be NULL)
+     * @param entry Pointer to store the popped entry (can be NULL)
+     * @return 0 on success, -1 on error (stack empty or NULL stack)
+     */
+    if (stack == NULL || stack->top == NULL) {
+        return -1;
+    }
+    
+    StackNode* top_node = stack->top;
+    
+    // Copy entry if requested
+    if (entry != NULL) {
+        *entry = top_node->entry;
+    }
+    
+    // Remove top node
+    stack->top = top_node->next;
+    free(top_node);
+    stack->size--;
+    
+    return 0;
+}
+
+int LoginHistoryStack_Peek(LoginHistoryStack* stack, LoginHistoryEntry* entry) {
+    /**
+     * @brief Peek at the top entry without removing it
+     * 
+     * Returns the top entry without removing it from the stack.
+     * 
+     * @param stack Pointer to the stack (must not be NULL)
+     * @param entry Pointer to store the top entry (must not be NULL)
+     * @return 0 on success, -1 on error (stack empty or NULL parameters)
+     */
+    if (stack == NULL || stack->top == NULL || entry == NULL) {
+        return -1;
+    }
+    
+    *entry = stack->top->entry;
+    return 0;
+}
+
+int LoginHistoryStack_IsEmpty(LoginHistoryStack* stack) {
+    /**
+     * @brief Check if stack is empty
+     * 
+     * @param stack Pointer to the stack
+     * @return 1 if empty, 0 if not empty, -1 if NULL
+     */
+    if (stack == NULL) {
+        return -1;
+    }
+    return (stack->top == NULL) ? 1 : 0;
+}
+
+size_t LoginHistoryStack_GetSize(LoginHistoryStack* stack) {
+    /**
+     * @brief Get the number of entries in the stack
+     * 
+     * @param stack Pointer to the stack
+     * @return Number of entries, or 0 if NULL
+     */
+    if (stack == NULL) {
+        return 0;
+    }
+    return stack->size;
+}
+
+LoginHistoryStack* InventoryManager_GetLoginHistory(void) {
+    /**
+     * @brief Get the global login history stack
+     * 
+     * Returns a pointer to the global login history stack.
+     * The stack is initialized by InventoryManager_Init().
+     * 
+     * @return Pointer to the global stack, or NULL if not initialized
+     */
+    return g_login_history;
+}
+
+int InventoryManager_AddLoginHistory(const char* username) {
+    /**
+     * @brief Add a login entry to the global history
+     * 
+     * Adds a login entry to the global login history stack.
+     * 
+     * @param username The username that logged in (must not be NULL)
+     * @return 0 on success, -1 on error (not initialized or NULL username)
+     */
+    if (g_login_history == NULL || username == NULL) {
+        return -1;
+    }
+    
+    return LoginHistoryStack_Push(g_login_history, username);
+}
+
+int InventoryManager_ViewLoginHistory(size_t count) {
+    /**
+     * @brief View recent login history
+     * 
+     * Displays the recent login history entries. If count is 0, displays all entries.
+     * 
+     * @param count Number of recent entries to display (0 for all)
+     * @return 0 on success, -1 on error (not initialized)
+     */
+    if (g_login_history == NULL) {
+        return -1;
+    }
+    
+    if (LoginHistoryStack_IsEmpty(g_login_history)) {
+        printf("No login history available.\n");
+        return 0;
+    }
+    
+    // Display entries (copy stack to preserve it)
+    LoginHistoryEntry* entries = (LoginHistoryEntry*)safe_malloc(sizeof(LoginHistoryEntry) * g_login_history->size);
+    if (entries == NULL) {
+        return -1;
+    }
+    
+    // Pop all entries and store them
+    size_t entry_count = 0;
+    LoginHistoryEntry entry;
+    while (LoginHistoryStack_Pop(g_login_history, &entry) == 0) {
+        entries[entry_count++] = entry;
+    }
+    
+    // Display entries (most recent first)
+    size_t display_count = (count == 0 || count > entry_count) ? entry_count : count;
+    printf("\n--- Recent Login History (Last %zu entries) ---\n", display_count);
+    printf("%-5s %-20s %-15s\n", "No.", "Username", "Timestamp");
+    printf("------------------------------------------------\n");
+    
+    for (size_t i = 0; i < display_count; i++) {
+        printf("%-5zu %-20s %-15u\n", i + 1, entries[i].username, entries[i].timestamp);
+    }
+    
+    // Restore stack (push back in reverse order to maintain original order)
+    for (int i = (int)entry_count - 1; i >= 0; i--) {
+        LoginHistoryStack_Push(g_login_history, entries[i].username);
+    }
+    
+    free(entries);
+    return 0;
+}
+
+// Wrapper Functions for User Authentication
+
+HashTable* InventoryManager_GetHashTable(void) {
+    /**
+     * @brief Get the global hash table for user operations
+     * 
+     * Returns a pointer to the global hash table used for user authentication.
+     * The hash table is initialized by InventoryManager_Init().
+     * 
+     * @return Pointer to the global hash table, or NULL if not initialized
+     */
+    return g_user_hash_table;
+}
+
+int InventoryManager_RegisterUser(const char* username, const char* password) {
+    /**
+     * @brief Register a new user (wrapper function)
+     * 
+     * Registers a new user in the global hash table.
+     * 
+     * @param username The username (max 63 characters, must not be NULL)
+     * @param password The password (must not be NULL)
+     * @return 0 on success, -1 on error (NULL parameters, duplicate username, or not initialized)
+     */
+    if (g_user_hash_table == NULL || username == NULL || password == NULL) {
+        return -1;
+    }
+    
+    return HashTable_AddUser(g_user_hash_table, username, password);
+}
+
+int InventoryManager_LoginUser(const char* username, const char* password) {
+    /**
+     * @brief Login a user (wrapper function with history tracking)
+     * 
+     * Authenticates a user and adds the login to the history stack if successful.
+     * 
+     * @param username The username (must not be NULL)
+     * @param password The password (must not be NULL)
+     * @return 1 if authentication successful, 0 otherwise
+     */
+    if (g_user_hash_table == NULL || username == NULL || password == NULL) {
+        return 0;
+    }
+    
+    int result = HashTable_Authenticate(g_user_hash_table, username, password);
+    
+    // Add to login history if successful
+    if (result == 1) {
+        InventoryManager_AddLoginHistory(username);
+    }
+    
+    return result;
+}
+
+// Material Inventory Management Functions
+
+MaterialList* InventoryManager_GetMaterialList(void) {
+    /**
+     * @brief Get the global material list
+     * 
+     * Returns a pointer to the global material list used for inventory management.
+     * The material list is initialized by InventoryManager_Init().
+     * 
+     * @return Pointer to the global material list, or NULL if not initialized
+     */
+    return g_material_list;
+}
+
+int InventoryManager_InitMaterialInventory(const char* filename) {
+    /**
+     * @brief Initialize material inventory (load from file if exists)
+     * 
+     * Creates and initializes the global material list for inventory management.
+     * If a filename is provided, attempts to load materials from binary file.
+     * 
+     * @param filename Optional filename to load materials from (NULL to start fresh)
+     * @return 0 on success, -1 on error (memory allocation failure)
+     */
+    if (g_material_list == NULL) {
+        // Try to load from file if filename is provided
+        if (filename != NULL) {
+            g_material_list = MaterialList_LoadFromFile(NULL, filename);
+            if (g_material_list != NULL) {
+                return 0; // Successfully loaded
+            }
+            // If load failed, continue to create new list
+        }
+        
+        // Create new material list
+        g_material_list = MaterialList_Create();
+        if (g_material_list == NULL) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int InventoryManager_CleanupMaterialInventory(const char* filename) {
+    /**
+     * @brief Cleanup material inventory (save to file)
+     * 
+     * Saves the global material list to binary file if filename is provided,
+     * then destroys the global material list and frees all associated memory.
+     * 
+     * @param filename Optional filename to save materials to (NULL to skip save)
+     * @return 0 on success, -1 on error (file save error)
+     */
+    if (g_material_list != NULL) {
+        // Save to file if filename is provided
+        if (filename != NULL) {
+            MaterialList_SaveToFile(g_material_list, filename);
+        }
+        
+        MaterialList_Destroy(g_material_list);
+        g_material_list = NULL;
+    }
+    return 0;
 }
