@@ -94,8 +94,8 @@ call reportgenerator "-title:Inventory Management Library Unit Test Coverage Rep
 call reportgenerator "-targetdir:assets/codecoveragelibwin" "-reporttypes:Badges" "-reports:**/inventory_app_unit_win_cobertura.xml;**/inventory_app_error_test_unit_win_cobertura.xml" "-sourcedirs:src/inventory_lib/src;src/inventory_lib/header;src/inventory_app/src;src/inventory_app/header;src/tests/inventory_lib_test" "-filefilters:-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h;-*build*"
 
 echo Generate Test Source Coverage Report
-call reportgenerator "-title:Inventory Management Library Test Source Coverage Report (Windows)" "-targetdir:docs/coveragereporttestwin" "-reporttypes:Html" "-reports:**/inventory_app_unit_win_cobertura.xml" "-sourcedirs:src/tests/inventory_lib_test" "-filefilters:-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h;-*build*" "-historydir:report_test_source_hist_win"
-call reportgenerator "-targetdir:assets/codecoveragetestwin" "-reporttypes:Badges" "-reports:**/inventory_app_unit_win_cobertura.xml" "-sourcedirs:src/tests/inventory_lib_test" "-filefilters:-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h;-*build*"
+call reportgenerator "-title:Inventory Management Library Test Source Coverage Report (Windows)" "-targetdir:docs/coveragereporttestwin" "-reporttypes:Html" "-reports:**/inventory_app_unit_win_cobertura.xml;**/inventory_app_error_test_unit_win_cobertura.xml" "-sourcedirs:src/tests/inventory_lib_test" "-filefilters:-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h;-*build*" "-historydir:report_test_source_hist_win"
+call reportgenerator "-targetdir:assets/codecoveragetestwin" "-reporttypes:Badges" "-reports:**/inventory_app_unit_win_cobertura.xml;**/inventory_app_error_test_unit_win_cobertura.xml" "-sourcedirs:src/tests/inventory_lib_test" "-filefilters:-*minkernel\*;-*gtest*;-*a\_work\*;-*gtest-*;-*gtest.cc;-*gtest.h;-*build*"
 
 echo Copy the "assets" folder and its contents to "docs" recursively
 call robocopy assets "docs\assets" /E
