@@ -1,14 +1,66 @@
+/**
+ * @file InventoryManager_test.cpp
+ * @brief Unit tests for InventoryManager module
+ * 
+ * This file contains comprehensive unit tests for the InventoryManager module
+ * using the Google Test framework. The tests cover initialization, cleanup,
+ * hash table operations, user management, authentication, and error handling.
+ * 
+ * @details The test suite includes:
+ * - Basic initialization and cleanup tests
+ * - Hash table creation and destruction tests
+ * - User addition, removal, and lookup tests
+ * - Authentication tests
+ * - Collision handling tests
+ * - Error path tests (NULL pointer checks, malloc failures)
+ * - Edge case tests
+ * 
+ * @note All tests use the InventoryManagerTest fixture class which provides
+ * setup and teardown functionality to ensure clean test state.
+ */
+
 #include "gtest/gtest.h"
 #include "../../inventory_lib/header/InventoryManager.h"
 #include "mock_malloc.h"
 #include <cstring>
 
+/**
+ * @class InventoryManagerTest
+ * @brief Test fixture for InventoryManager unit tests
+ * 
+ * This class provides a test fixture that sets up and tears down the
+ * test environment for each test case. It ensures that the inventory
+ * manager is properly initialized and cleaned up between tests.
+ * 
+ * @details The fixture provides:
+ * - SetUp() method for test initialization (currently empty but can be
+ *   extended for common setup operations)
+ * - TearDown() method for test cleanup (currently empty but can be
+ *   extended for common cleanup operations)
+ * 
+ * @note All test cases using this fixture should ensure proper cleanup
+ * of any resources they allocate during the test.
+ */
 class InventoryManagerTest : public ::testing::Test {
 protected:
+	/**
+	 * @brief Set up test environment before each test
+	 * 
+	 * This method is called before each test case runs. Currently empty
+	 * but can be extended to perform common setup operations such as
+	 * initializing test data or resetting global state.
+	 */
 	void SetUp() override {
 		// Setup test data
 	}
 
+	/**
+	 * @brief Clean up test environment after each test
+	 * 
+	 * This method is called after each test case completes. Currently empty
+	 * but can be extended to perform common cleanup operations such as
+	 * freeing test data or resetting global state.
+	 */
 	void TearDown() override {
 		// Clean up test data
 	}

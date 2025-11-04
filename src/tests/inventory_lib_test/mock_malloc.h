@@ -15,7 +15,7 @@ extern "C" {
 
 /**
  * @brief Set whether malloc should fail
- * @param should_fail True to make malloc fail, false otherwise
+ * @param should_fail Non-zero value to make malloc fail, 0 to allow normal allocation
  */
 void mock_malloc_set_fail(int should_fail);
 
@@ -42,8 +42,8 @@ int mock_malloc_get_call_count(void);
  * This function can be used as a malloc hook in InventoryManager_SetMallocHook.
  * It uses the mock_malloc control variables to determine if allocation should fail.
  * 
- * @param size The size to allocate
- * @return Pointer to allocated memory, or NULL if allocation should fail
+ * @param size The size to allocate in bytes
+ * @return Pointer to allocated memory on success, or NULL if allocation should fail
  */
 void* mock_malloc_hook(size_t size);
 
