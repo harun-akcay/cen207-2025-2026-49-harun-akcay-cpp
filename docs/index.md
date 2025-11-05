@@ -2,7 +2,60 @@
 
 ## Overview
 
-This project implements a console-based inventory management system for crafters using C programming language. The system provides material inventory tracking, project management, expense logging, and sales tracking capabilities. It demonstrates various data structures (Double Linked List, Hash Table, etc.) and binary file operations.
+This project implements a console-based inventory management system for crafters using C programming language. The system provides material inventory tracking, project management, expense logging, and sales tracking capabilities. It demonstrates various data structures (Double Linked List, Hash Table, Stack, etc.) and binary file operations.
+
+### Project Information
+
+- **Course:** CEN207/CE205 - Data Structures
+- **Semester:** Fall 2025-2026
+- **Instructor:** Asst. Prof. Dr. Uğur CORUH
+- **Project Number:** 49
+- **Project Name:** Simple Inventory Management for Crafters
+
+## Implemented Features
+
+### ✅ Completed Modules
+
+1. **User Authentication (Hash Table)**
+   - Hash table implementation with separate chaining
+   - djb2 hash algorithm
+   - User registration and login
+   - Password hashing
+   - Login history tracking (Stack)
+
+2. **Material Inventory (Double Linked List)**
+   - Bidirectional linked list implementation
+   - Add, edit, remove, and view materials
+   - Material search functionality
+   - Efficient insertion/deletion operations
+
+3. **Binary File Operations**
+   - Binary file storage for data persistence
+   - Save/load functionality for all data structures
+   - Efficient file I/O operations
+
+### 🚧 Planned Modules (Not Yet Implemented)
+
+1. **Project Tracking** - Stack/Queue implementation
+2. **Expense Logging** - Sparse Matrix implementation
+3. **Sales Tracker** - Heap/Heap Sort implementation
+4. **Graph Algorithms** - BFS/DFS for project dependencies
+
+## Data Structures and Algorithms
+
+### Implemented Data Structures
+
+| Data Structure | Location | Use Case | Time Complexity |
+|---------------|----------|----------|----------------|
+| Hash Table | `src/inventory_lib/` | User Authentication | O(1) avg, O(n) worst |
+| Double Linked List | `src/inventory_lib/` | Material Inventory | O(1) insert/delete, O(n) search |
+| Stack | `src/inventory_lib/` | Login History | O(1) push/pop |
+
+### Algorithms
+
+- **djb2 Hash Algorithm:** For username and password hashing
+- **Separate Chaining:** For hash table collision handling
+- **Bidirectional Traversal:** For double linked list operations
 
 ## Requirements
 
