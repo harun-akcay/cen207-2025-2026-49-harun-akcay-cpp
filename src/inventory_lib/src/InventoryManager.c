@@ -5,6 +5,8 @@
 
 #include "../header/InventoryManager.h"
 #include "../header/MaterialInventory.h"
+#include "../header/ProjectTracking.h"
+#include "../header/ExpenseTracking.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -50,6 +52,12 @@ static uint32_t g_timestamp_counter = 1;
 
 /** @brief Global material list for inventory */
 static MaterialList* g_material_list = NULL;
+
+/** @brief Global project stack for project tracking */
+static ProjectStack* g_project_stack = NULL;
+
+/** @brief Global expense matrix for expense logging */
+static ExpenseMatrix* g_expense_matrix = NULL;
 
 int InventoryManager_Init(const char* filename) {
     /**
@@ -102,6 +110,30 @@ int InventoryManager_Init(const char* filename) {
         }
     }
     
+    // Initialize project stack if not already initialized
+    if (g_project_stack == NULL) {
+        g_project_stack = ProjectStack_LoadFromFile(NULL, "projects.bin");
+        if (g_project_stack == NULL) {
+            // Create new stack if file doesn't exist
+            g_project_stack = ProjectStack_Create(0); // Unlimited capacity
+            if (g_project_stack == NULL) {
+                return -1;
+            }
+        }
+    }
+    
+    // Initialize expense matrix if not already initialized
+    if (g_expense_matrix == NULL) {
+        g_expense_matrix = ExpenseMatrix_LoadFromFile(NULL, "expenses.bin");
+        if (g_expense_matrix == NULL) {
+            // Create new matrix if file doesn't exist
+            g_expense_matrix = ExpenseMatrix_Create(0, 0); // Use defaults
+            if (g_expense_matrix == NULL) {
+                return -1;
+            }
+        }
+    }
+    
     return 0;
 }
 
@@ -138,6 +170,20 @@ int InventoryManager_Cleanup(const char* filename) {
     if (g_material_list != NULL) {
         InventoryManager_CleanupMaterialInventory("materials.bin");
         g_material_list = NULL;
+    }
+    
+    // Cleanup project stack
+    if (g_project_stack != NULL) {
+        ProjectStack_SaveToFile(g_project_stack, "projects.bin");
+        ProjectStack_Destroy(g_project_stack);
+        g_project_stack = NULL;
+    }
+    
+    // Cleanup expense matrix
+    if (g_expense_matrix != NULL) {
+        ExpenseMatrix_SaveToFile(g_expense_matrix, "expenses.bin");
+        ExpenseMatrix_Destroy(g_expense_matrix);
+        g_expense_matrix = NULL;
     }
     
     return 0;
@@ -927,6 +973,136 @@ int InventoryManager_CleanupMaterialInventory(const char* filename) {
         
         MaterialList_Destroy(g_material_list);
         g_material_list = NULL;
+    }
+    return 0;
+}
+
+// Project Tracking Functions
+
+ProjectStack* InventoryManager_GetProjectStack(void) {
+    /**
+     * @brief Get the global project stack
+     * 
+     * Returns a pointer to the global project stack used for project tracking.
+     * The project stack is initialized by InventoryManager_Init().
+     * 
+     * @return Pointer to the global project stack, or NULL if not initialized
+     */
+    return g_project_stack;
+}
+
+int InventoryManager_InitProjectTracking(const char* filename) {
+    /**
+     * @brief Initialize project tracking (load from file if exists)
+     * 
+     * Creates and initializes the global project stack for project tracking.
+     * If a filename is provided, attempts to load projects from binary file.
+     * 
+     * @param filename Optional filename to load projects from (NULL to start fresh)
+     * @return 0 on success, -1 on error (memory allocation failure)
+     */
+    if (g_project_stack == NULL) {
+        // Try to load from file if filename is provided
+        if (filename != NULL) {
+            g_project_stack = ProjectStack_LoadFromFile(NULL, filename);
+            if (g_project_stack != NULL) {
+                return 0; // Successfully loaded
+            }
+            // If load failed, continue to create new stack
+        }
+        
+        // Create new project stack
+        g_project_stack = ProjectStack_Create(0); // Unlimited capacity
+        if (g_project_stack == NULL) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int InventoryManager_CleanupProjectTracking(const char* filename) {
+    /**
+     * @brief Cleanup project tracking (save to file)
+     * 
+     * Saves the global project stack to binary file if filename is provided,
+     * then destroys the global project stack and frees all associated memory.
+     * 
+     * @param filename Optional filename to save projects to (NULL to skip save)
+     * @return 0 on success, -1 on error (file save error)
+     */
+    if (g_project_stack != NULL) {
+        // Save to file if filename is provided
+        if (filename != NULL) {
+            ProjectStack_SaveToFile(g_project_stack, filename);
+        }
+        
+        ProjectStack_Destroy(g_project_stack);
+        g_project_stack = NULL;
+    }
+    return 0;
+}
+
+// Expense Tracking Functions
+
+ExpenseMatrix* InventoryManager_GetExpenseMatrix(void) {
+    /**
+     * @brief Get the global expense matrix
+     * 
+     * Returns a pointer to the global expense matrix used for expense logging.
+     * The expense matrix is initialized by InventoryManager_Init().
+     * 
+     * @return Pointer to the global expense matrix, or NULL if not initialized
+     */
+    return g_expense_matrix;
+}
+
+int InventoryManager_InitExpenseTracking(const char* filename) {
+    /**
+     * @brief Initialize expense tracking (load from file if exists)
+     * 
+     * Creates and initializes the global expense matrix for expense logging.
+     * If a filename is provided, attempts to load expenses from binary file.
+     * 
+     * @param filename Optional filename to load expenses from (NULL to start fresh)
+     * @return 0 on success, -1 on error (memory allocation failure)
+     */
+    if (g_expense_matrix == NULL) {
+        // Try to load from file if filename is provided
+        if (filename != NULL) {
+            g_expense_matrix = ExpenseMatrix_LoadFromFile(NULL, filename);
+            if (g_expense_matrix != NULL) {
+                return 0; // Successfully loaded
+            }
+            // If load failed, continue to create new matrix
+        }
+        
+        // Create new expense matrix
+        g_expense_matrix = ExpenseMatrix_Create(0, 0); // Use defaults
+        if (g_expense_matrix == NULL) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int InventoryManager_CleanupExpenseTracking(const char* filename) {
+    /**
+     * @brief Cleanup expense tracking (save to file)
+     * 
+     * Saves the global expense matrix to binary file if filename is provided,
+     * then destroys the global expense matrix and frees all associated memory.
+     * 
+     * @param filename Optional filename to save expenses to (NULL to skip save)
+     * @return 0 on success, -1 on error (file save error)
+     */
+    if (g_expense_matrix != NULL) {
+        // Save to file if filename is provided
+        if (filename != NULL) {
+            ExpenseMatrix_SaveToFile(g_expense_matrix, filename);
+        }
+        
+        ExpenseMatrix_Destroy(g_expense_matrix);
+        g_expense_matrix = NULL;
     }
     return 0;
 }

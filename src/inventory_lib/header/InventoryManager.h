@@ -10,6 +10,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "MaterialInventory.h"
+#include "ProjectTracking.h"
+#include "ExpenseTracking.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -365,6 +367,50 @@ int InventoryManager_InitMaterialInventory(const char* filename);
  * @return 0 on success, -1 on error.
  */
 int InventoryManager_CleanupMaterialInventory(const char* filename);
+
+// Project Tracking Functions
+
+/**
+ * @brief Get the global project stack.
+ * @return Pointer to the global project stack, or NULL if not initialized.
+ */
+ProjectStack* InventoryManager_GetProjectStack(void);
+
+/**
+ * @brief Initialize project tracking (load from file if exists).
+ * @param filename Optional filename to load projects from (NULL to start fresh).
+ * @return 0 on success, -1 on error.
+ */
+int InventoryManager_InitProjectTracking(const char* filename);
+
+/**
+ * @brief Cleanup project tracking (save to file).
+ * @param filename Optional filename to save projects to (NULL to skip save).
+ * @return 0 on success, -1 on error.
+ */
+int InventoryManager_CleanupProjectTracking(const char* filename);
+
+// Expense Tracking Functions
+
+/**
+ * @brief Get the global expense matrix.
+ * @return Pointer to the global expense matrix, or NULL if not initialized.
+ */
+ExpenseMatrix* InventoryManager_GetExpenseMatrix(void);
+
+/**
+ * @brief Initialize expense tracking (load from file if exists).
+ * @param filename Optional filename to load expenses from (NULL to start fresh).
+ * @return 0 on success, -1 on error.
+ */
+int InventoryManager_InitExpenseTracking(const char* filename);
+
+/**
+ * @brief Cleanup expense tracking (save to file).
+ * @param filename Optional filename to save expenses to (NULL to skip save).
+ * @return 0 on success, -1 on error.
+ */
+int InventoryManager_CleanupExpenseTracking(const char* filename);
 
 #ifdef __cplusplus
 }

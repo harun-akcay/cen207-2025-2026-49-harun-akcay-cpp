@@ -35,6 +35,8 @@ install(TARGETS ${LIBNAME}
 # Copy required headers to the installation include folder		
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/header/InventoryManager.h
         ${CMAKE_CURRENT_SOURCE_DIR}/header/MaterialInventory.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/header/ProjectTracking.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/header/ExpenseTracking.h
         DESTINATION include)
 
 # Export the inventory_lib target so other modules can use it

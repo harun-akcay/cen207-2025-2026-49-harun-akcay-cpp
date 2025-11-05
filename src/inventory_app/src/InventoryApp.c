@@ -15,6 +15,8 @@
 #include "../header/InventoryApp.h"
 #include "../../inventory_lib/header/InventoryManager.h"
 #include "../../inventory_lib/header/MaterialInventory.h"
+#include "../../inventory_lib/header/ProjectTracking.h"
+#include "../../inventory_lib/header/ExpenseTracking.h"
 
 /**
  * @brief Clear input buffer
@@ -475,25 +477,169 @@ MenuType InventoryApp_ShowProjectTrackingMenu(void) {
         return MENU_PROJECT_TRACKING;
     }
     
+    ProjectStack* project_stack = InventoryManager_GetProjectStack();
+    if (project_stack == NULL) {
+        printf("Error: Project tracking not initialized.\n");
+        return MENU_MAIN;
+    }
+    
     switch (choice) {
         case 1:
             printf("\n--- View Projects ---\n");
-            printf("Project tracking functionality will be implemented soon.\n");
+            {
+                size_t max_count = 0;
+                int count_input;
+                if (InventoryApp_GetIntInput("Number of projects to display (0 for all): ", &count_input) == 0 && count_input >= 0) {
+                    max_count = (size_t)count_input;
+                }
+                ProjectStack_ViewProjects(project_stack, max_count);
+            }
             return MENU_PROJECT_TRACKING;
             
         case 2:
             printf("\n--- Add Project ---\n");
-            printf("Project tracking functionality will be implemented soon.\n");
+            {
+                char name[128];
+                char description[256];
+                int status_input;
+                
+                if (InventoryApp_GetStringInput("Project Name: ", name, sizeof(name)) != 0) {
+                    printf("Error reading project name.\n");
+                    return MENU_PROJECT_TRACKING;
+                }
+                if (InventoryApp_GetStringInput("Project Description: ", description, sizeof(description)) != 0) {
+                    printf("Error reading project description.\n");
+                    return MENU_PROJECT_TRACKING;
+                }
+                
+                printf("Project Status:\n");
+                printf("  0 = Not Started\n");
+                printf("  1 = In Progress\n");
+                printf("  2 = On Hold\n");
+                printf("  3 = Completed\n");
+                printf("  4 = Cancelled\n");
+                if (InventoryApp_GetIntInput("Status (0-4): ", &status_input) != 0 || 
+                    status_input < 0 || status_input > 4) {
+                    printf("Error reading status. Defaulting to 'Not Started'.\n");
+                    status_input = 0;
+                }
+                
+                uint32_t project_id = ProjectStack_AddProject(project_stack, name, description, (ProjectStatus)status_input);
+                if (project_id != 0) {
+                    printf("Project added successfully! Project ID: %u\n", project_id);
+                } else {
+                    printf("Error: Failed to add project.\n");
+                }
+            }
             return MENU_PROJECT_TRACKING;
             
         case 3:
             printf("\n--- Edit Project ---\n");
-            printf("Project tracking functionality will be implemented soon.\n");
+            {
+                int id_input;
+                uint32_t project_id;
+                Project* project;
+                
+                if (InventoryApp_GetIntInput("Project ID to edit: ", &id_input) != 0 || id_input <= 0) {
+                    printf("Error reading project ID. Please enter a valid number.\n");
+                    return MENU_PROJECT_TRACKING;
+                }
+                project_id = (uint32_t)id_input;
+                
+                project = ProjectStack_FindProject(project_stack, project_id);
+                if (project == NULL) {
+                    printf("Error: Project with ID %u not found.\n", project_id);
+                    return MENU_PROJECT_TRACKING;
+                }
+                
+                printf("Current Project Information:\n");
+                printf("  ID: %u\n", project->id);
+                printf("  Name: %s\n", project->name);
+                printf("  Description: %s\n", project->description);
+                printf("  Status: %s\n", ProjectStack_GetStatusString(project->status));
+                
+                char name[128];
+                char description[256];
+                int status_input = -1;
+                
+                // Edit name
+                if (InventoryApp_GetStringInput("New Name (or press Enter to skip): ", name, sizeof(name)) == 0 && strlen(name) > 0) {
+                    // Name provided
+                } else {
+                    name[0] = '\0';
+                }
+                
+                // Edit description
+                if (InventoryApp_GetStringInput("New Description (or press Enter to skip): ", description, sizeof(description)) == 0 && strlen(description) > 0) {
+                    // Description provided
+                } else {
+                    description[0] = '\0';
+                }
+                
+                // Edit status
+                printf("New Status (0-4, or -1 to skip):\n");
+                printf("  0 = Not Started, 1 = In Progress, 2 = On Hold, 3 = Completed, 4 = Cancelled\n");
+                {
+                    int temp_status;
+                    if (InventoryApp_GetIntInput("Status: ", &temp_status) == 0 && temp_status >= -1 && temp_status <= 4) {
+                        status_input = temp_status;
+                    }
+                }
+                
+                const char* name_ptr = (strlen(name) > 0) ? name : NULL;
+                const char* description_ptr = (strlen(description) > 0) ? description : NULL;
+                
+                if (ProjectStack_UpdateProject(project_stack, project_id, name_ptr, description_ptr, status_input) == 0) {
+                    printf("Project updated successfully!\n");
+                } else {
+                    printf("Error: Failed to update project.\n");
+                }
+            }
             return MENU_PROJECT_TRACKING;
             
         case 4:
             printf("\n--- Remove Project ---\n");
-            printf("Project tracking functionality will be implemented soon.\n");
+            {
+                int id_input;
+                uint32_t project_id;
+                Project project;
+                
+                if (InventoryApp_GetIntInput("Project ID to remove: ", &id_input) != 0 || id_input <= 0) {
+                    printf("Error reading project ID. Please enter a valid number.\n");
+                    return MENU_PROJECT_TRACKING;
+                }
+                project_id = (uint32_t)id_input;
+                
+                Project* found_project = ProjectStack_FindProject(project_stack, project_id);
+                if (found_project == NULL) {
+                    printf("Error: Project with ID %u not found.\n", project_id);
+                    return MENU_PROJECT_TRACKING;
+                }
+                
+                printf("Project to remove:\n");
+                printf("  ID: %u\n", found_project->id);
+                printf("  Name: %s\n", found_project->name);
+                printf("  Status: %s\n", ProjectStack_GetStatusString(found_project->status));
+                
+                // Note: Stack is LIFO, so we can only remove from top
+                // For removing by ID, we need to pop until we find it, then push back others
+                // This is a simplified version - we'll remove the top project if it matches
+                if (found_project->id == project_stack->top->project.id) {
+                    int confirm;
+                    if (InventoryApp_GetIntInput("Are you sure? (1=Yes, 0=No): ", &confirm) == 0 && confirm == 1) {
+                        if (ProjectStack_RemoveProject(project_stack, &project) == 0) {
+                            printf("Project removed successfully!\n");
+                        } else {
+                            printf("Error: Failed to remove project.\n");
+                        }
+                    } else {
+                        printf("Removal cancelled.\n");
+                    }
+                } else {
+                    printf("Note: Only the top project (most recent) can be removed from stack.\n");
+                    printf("To remove this project, please remove projects above it first.\n");
+                }
+            }
             return MENU_PROJECT_TRACKING;
             
         case 0:
@@ -526,15 +672,84 @@ MenuType InventoryApp_ShowExpenseLoggingMenu(void) {
         return MENU_EXPENSE_LOGGING;
     }
     
+    ExpenseMatrix* expense_matrix = InventoryManager_GetExpenseMatrix();
+    if (expense_matrix == NULL) {
+        printf("Error: Expense tracking not initialized.\n");
+        return MENU_MAIN;
+    }
+    
     switch (choice) {
         case 1:
             printf("\n--- Log Expense ---\n");
-            printf("Expense logging functionality will be implemented soon.\n");
+            {
+                uint32_t project_id = 0;
+                uint32_t material_id = 0;
+                char category[64];
+                char description[256];
+                uint32_t amount_cents = 0;
+                int project_input, material_input;
+                int price_dollars, price_cents_input;
+                
+                // Get project ID (optional)
+                {
+                    int temp_input;
+                    if (InventoryApp_GetIntInput("Project ID (0 for no project, or Enter to skip): ", &temp_input) == 0) {
+                        project_id = (temp_input >= 0) ? (uint32_t)temp_input : 0;
+                    }
+                }
+                
+                // Get material ID (optional)
+                {
+                    int temp_input;
+                    if (InventoryApp_GetIntInput("Material ID (0 for no material, or Enter to skip): ", &temp_input) == 0) {
+                        material_id = (temp_input >= 0) ? (uint32_t)temp_input : 0;
+                    }
+                }
+                
+                // Get category
+                if (InventoryApp_GetStringInput("Expense Category (e.g., Materials, Tools, Shipping): ", category, sizeof(category)) != 0) {
+                    printf("Error reading category.\n");
+                    return MENU_EXPENSE_LOGGING;
+                }
+                
+                // Get amount
+                printf("Expense Amount (enter dollars and cents separately):\n");
+                if (InventoryApp_GetIntInput("Dollars: ", &price_dollars) != 0 || price_dollars < 0) {
+                    printf("Error reading amount dollars. Please enter a valid number.\n");
+                    return MENU_EXPENSE_LOGGING;
+                }
+                if (InventoryApp_GetIntInput("Cents: ", &price_cents_input) != 0 || price_cents_input < 0 || price_cents_input > 99) {
+                    printf("Error reading amount cents. Please enter a valid number (0-99).\n");
+                    return MENU_EXPENSE_LOGGING;
+                }
+                amount_cents = (uint32_t)(price_dollars * 100 + price_cents_input);
+                
+                // Get description
+                if (InventoryApp_GetStringInput("Expense Description: ", description, sizeof(description)) != 0) {
+                    printf("Error reading description.\n");
+                    return MENU_EXPENSE_LOGGING;
+                }
+                
+                uint32_t expense_id = ExpenseMatrix_AddExpense(expense_matrix, project_id, category,
+                                                               amount_cents, material_id, description);
+                if (expense_id != 0) {
+                    printf("Expense logged successfully! Expense ID: %u\n", expense_id);
+                } else {
+                    printf("Error: Failed to log expense.\n");
+                }
+            }
             return MENU_EXPENSE_LOGGING;
             
         case 2:
             printf("\n--- View Expenses ---\n");
-            printf("Expense logging functionality will be implemented soon.\n");
+            {
+                size_t max_count = 0;
+                int count_input;
+                if (InventoryApp_GetIntInput("Number of expenses to display (0 for all): ", &count_input) == 0 && count_input >= 0) {
+                    max_count = (size_t)count_input;
+                }
+                ExpenseMatrix_ViewExpenses(expense_matrix, max_count);
+            }
             return MENU_EXPENSE_LOGGING;
             
         case 0:
