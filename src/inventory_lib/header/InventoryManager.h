@@ -12,6 +12,7 @@
 #include "MaterialInventory.h"
 #include "ProjectTracking.h"
 #include "ExpenseTracking.h"
+#include "SalesTracker.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -397,6 +398,16 @@ int InventoryManager_CleanupProjectTracking(const char* filename);
  * @return Pointer to the global expense matrix, or NULL if not initialized.
  */
 ExpenseMatrix* InventoryManager_GetExpenseMatrix(void);
+
+/**
+ * @brief Get the global sales tracker instance
+ * 
+ * Returns a pointer to the global sales tracker instance.
+ * The sales tracker is initialized by InventoryManager_Init().
+ * 
+ * @return Pointer to the global sales tracker, or NULL if not initialized
+ */
+SalesTracker* InventoryManager_GetSalesTracker(void);
 
 /**
  * @brief Initialize expense tracking (load from file if exists).

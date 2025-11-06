@@ -35,6 +35,15 @@ target_include_directories(${EXENAME} PUBLIC
 # Add any dependencies or compile options specific to inventory_lib tests
 target_link_libraries(${EXENAME} PRIVATE inventory_lib gtest gtest_main)
 
+# Enable test hooks for memory allocation testing
+target_compile_definitions(${EXENAME} PRIVATE ENABLE_INVENTORYMANAGER_TEST)
+target_compile_definitions(inventory_lib PRIVATE ENABLE_INVENTORYMANAGER_TEST)
+
+# For MSVC: Ensure C runtime is linked
+if(MSVC)
+    target_compile_options(${EXENAME} PRIVATE $<$<CONFIG:Debug>:/MTd> $<$<CONFIG:Release>:/MT>)
+endif()
+
 # Register the test with CTest
 # add_test(NAME ${EXENAME} COMMAND ${EXENAME})
 

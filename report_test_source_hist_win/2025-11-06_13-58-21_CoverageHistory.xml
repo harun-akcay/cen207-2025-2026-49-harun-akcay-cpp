@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<coverage version="1.0" date="2025-11-06_13-58-21" tag="">
+  <assembly name="C:\Users\Harun\Desktop\Proje\cen207-2025-2026-49-harun-akcay-cpp\build_win\build\Debug\inventory_app.exe">
+    <class name="ExpenseTracking.c" coveredlines="225" coverablelines="296" totallines="660" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="InventoryApp.c" coveredlines="50" coverablelines="499" totallines="946" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="InventoryManager.c" coveredlines="362" coverablelines="426" totallines="1143" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="MaterialInventory.c" coveredlines="174" coverablelines="214" totallines="522" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="ProjectTracking.c" coveredlines="373" coverablelines="555" totallines="1213" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="SalesTracker.c" coveredlines="256" coverablelines="297" totallines="757" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+  </assembly>
+  <assembly name="C:\Users\Harun\Desktop\Proje\cen207-2025-2026-49-harun-akcay-cpp\build_win\build\Debug\inventory_lib_tests.exe">
+    <class name="ExpenseTracking_test.cpp" coveredlines="268" coverablelines="269" totallines="509" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="ExpenseTracking.c" coveredlines="225" coverablelines="296" totallines="660" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="InventoryManager_test.cpp" coveredlines="486" coverablelines="486" totallines="880" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="InventoryManager.c" coveredlines="362" coverablelines="426" totallines="1143" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="MaterialInventory_test.cpp" coveredlines="295" coverablelines="295" totallines="575" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="MaterialInventory.c" coveredlines="174" coverablelines="214" totallines="522" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="mock_malloc.c" coveredlines="20" coverablelines="20" totallines="171" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="NavigationHistory_test.cpp" coveredlines="334" coverablelines="335" totallines="562" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="NavigationHistory.c" coveredlines="262" coverablelines="288" totallines="707" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="ProjectTracking_test.cpp" coveredlines="336" coverablelines="336" totallines="968" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="ProjectTracking.c" coveredlines="373" coverablelines="555" totallines="1213" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="SalesTracker_test.cpp" coveredlines="440" coverablelines="440" totallines="640" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="SalesTracker.c" coveredlines="256" coverablelines="297" totallines="757" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="TaskQueue_test.cpp" coveredlines="327" coverablelines="327" totallines="526" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+    <class name="TaskQueue.c" coveredlines="188" coverablelines="210" totallines="539" coveredbranches="0" totalbranches="0" coveredcodeelements="0" fullcoveredcodeelements="0" totalcodeelements="0" />
+  </assembly>
+</coverage>

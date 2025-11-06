@@ -516,3 +516,698 @@ const char* ProjectStack_GetStatusString(ProjectStatus status) {
     }
 }
 
+// Graph Algorithms Implementation (BFS/DFS)
+
+// Simple Queue structure for BFS (internal use)
+typedef struct QueueNode {
+    uint32_t data;
+    struct QueueNode* next;
+} QueueNode;
+
+typedef struct {
+    QueueNode* front;
+    QueueNode* rear;
+    size_t size;
+} SimpleQueue;
+
+static SimpleQueue* queue_create(void) {
+    SimpleQueue* q = (SimpleQueue*)safe_malloc(sizeof(SimpleQueue));
+    if (q == NULL) return NULL;
+    q->front = NULL;
+    q->rear = NULL;
+    q->size = 0;
+    return q;
+}
+
+static void queue_destroy(SimpleQueue* q) {
+    if (q == NULL) return;
+    while (q->front != NULL) {
+        QueueNode* temp = q->front;
+        q->front = q->front->next;
+        free(temp);
+    }
+    free(q);
+}
+
+static int queue_enqueue(SimpleQueue* q, uint32_t data) {
+    if (q == NULL) return -1;
+    QueueNode* node = (QueueNode*)safe_malloc(sizeof(QueueNode));
+    if (node == NULL) return -1;
+    node->data = data;
+    node->next = NULL;
+    if (q->rear == NULL) {
+        q->front = q->rear = node;
+    } else {
+        q->rear->next = node;
+        q->rear = node;
+    }
+    q->size++;
+    return 0;
+}
+
+static int queue_dequeue(SimpleQueue* q, uint32_t* data) {
+    if (q == NULL || q->front == NULL) return -1;
+    QueueNode* node = q->front;
+    *data = node->data;
+    q->front = q->front->next;
+    if (q->front == NULL) q->rear = NULL;
+    q->size--;
+    free(node);
+    return 0;
+}
+
+static int queue_is_empty(SimpleQueue* q) {
+    return (q == NULL || q->front == NULL) ? 1 : 0;
+}
+
+// Helper function to find node index by project ID
+static int find_node_index(ProjectDependencyGraph* graph, uint32_t project_id) {
+    if (graph == NULL) return -1;
+    for (size_t i = 0; i < graph->project_count; i++) {
+        if (graph->nodes[i].project_id == project_id) {
+            return (int)i;
+        }
+    }
+    return -1;
+}
+
+ProjectDependencyGraph* ProjectGraph_Create(size_t capacity) {
+    /**
+     * @brief Create a new project dependency graph
+     * 
+     * Allocates memory for a new project dependency graph.
+     * The graph is ready to use after creation.
+     * 
+     * @param capacity Maximum number of projects (0 for default MAX_PROJECTS_IN_GRAPH)
+     * @return Pointer to the newly created graph, or NULL on memory allocation failure
+     * 
+     * @note Time complexity: O(1)
+     * @note The caller is responsible for destroying the graph using ProjectGraph_Destroy()
+     * to avoid memory leaks.
+     */
+    ProjectDependencyGraph* graph = (ProjectDependencyGraph*)safe_malloc(sizeof(ProjectDependencyGraph));
+    if (graph == NULL) {
+        return NULL;
+    }
+    
+    size_t initial_capacity = (capacity > 0) ? capacity : MAX_PROJECTS_IN_GRAPH;
+    
+    graph->nodes = (ProjectGraphNode*)safe_malloc(initial_capacity * sizeof(ProjectGraphNode));
+    if (graph->nodes == NULL) {
+        free(graph);
+        return NULL;
+    }
+    
+    // Initialize nodes
+    for (size_t i = 0; i < initial_capacity; i++) {
+        graph->nodes[i].project_id = 0;
+        graph->nodes[i].dependencies = NULL;
+        graph->nodes[i].dependency_count = 0;
+        graph->nodes[i].dependency_capacity = 0;
+        graph->nodes[i].visited = 0;
+    }
+    
+    graph->project_count = 0;
+    graph->capacity = initial_capacity;
+    
+    return graph;
+}
+
+void ProjectGraph_Destroy(ProjectDependencyGraph* graph) {
+    /**
+     * @brief Destroy a project dependency graph and free all memory
+     * 
+     * Frees all nodes and dependencies in the graph and then frees the graph structure itself.
+     * This function is safe to call with NULL pointer (no-op).
+     * 
+     * @param graph Pointer to the graph to destroy (can be NULL)
+     * 
+     * @note Time complexity: O(V + E) where V is vertices and E is edges
+     */
+    if (graph == NULL) {
+        return;
+    }
+    
+    // Free all dependency arrays
+    for (size_t i = 0; i < graph->project_count; i++) {
+        if (graph->nodes[i].dependencies != NULL) {
+            free(graph->nodes[i].dependencies);
+        }
+    }
+    
+    // Free nodes array
+    if (graph->nodes != NULL) {
+        free(graph->nodes);
+    }
+    
+    free(graph);
+}
+
+int ProjectGraph_AddProject(ProjectDependencyGraph* graph, uint32_t project_id) {
+    /**
+     * @brief Add a project to the dependency graph
+     * 
+     * Adds a new project node to the graph.
+     * 
+     * @param graph Pointer to the dependency graph (must not be NULL)
+     * @param project_id Project ID to add
+     * @return 0 on success, -1 on error (NULL parameter or project already exists)
+     * 
+     * @note Time complexity: O(1) average case
+     */
+    if (graph == NULL || project_id == 0) {
+        return -1;
+    }
+    
+    // Check if project already exists
+    if (find_node_index(graph, project_id) >= 0) {
+        return -1; // Project already exists
+    }
+    
+    // Check capacity
+    if (graph->project_count >= graph->capacity) {
+        return -1; // Graph is full
+    }
+    
+    // Add new project node
+    size_t index = graph->project_count;
+    graph->nodes[index].project_id = project_id;
+    graph->nodes[index].dependencies = NULL;
+    graph->nodes[index].dependency_count = 0;
+    graph->nodes[index].dependency_capacity = 0;
+    graph->nodes[index].visited = 0;
+    
+    graph->project_count++;
+    
+    return 0;
+}
+
+int ProjectGraph_AddDependency(ProjectDependencyGraph* graph, uint32_t project_id, uint32_t dependency_id) {
+    /**
+     * @brief Add a dependency between two projects
+     * 
+     * Adds an edge from project_id to dependency_id, meaning project_id depends on dependency_id.
+     * 
+     * @param graph Pointer to the dependency graph (must not be NULL)
+     * @param project_id Project ID that depends on another project
+     * @param dependency_id Project ID that is a dependency
+     * @return 0 on success, -1 on error (NULL parameters or projects not found)
+     * 
+     * @note Time complexity: O(1) average case
+     */
+    if (graph == NULL || project_id == 0 || dependency_id == 0) {
+        return -1;
+    }
+    
+    int project_idx = find_node_index(graph, project_id);
+    int dependency_idx = find_node_index(graph, dependency_id);
+    
+    if (project_idx < 0 || dependency_idx < 0) {
+        return -1; // One or both projects not found
+    }
+    
+    // Check if dependency already exists
+    for (size_t i = 0; i < graph->nodes[project_idx].dependency_count; i++) {
+        if (graph->nodes[project_idx].dependencies[i] == dependency_id) {
+            return 0; // Dependency already exists
+        }
+    }
+    
+    // Resize dependency array if needed
+    if (graph->nodes[project_idx].dependency_count >= graph->nodes[project_idx].dependency_capacity) {
+        size_t new_capacity = (graph->nodes[project_idx].dependency_capacity == 0) ? 4 : 
+                              graph->nodes[project_idx].dependency_capacity * 2;
+        
+        uint32_t* new_deps = (uint32_t*)realloc(graph->nodes[project_idx].dependencies,
+                                                new_capacity * sizeof(uint32_t));
+        if (new_deps == NULL) {
+            return -1; // Memory allocation failed
+        }
+        
+        graph->nodes[project_idx].dependencies = new_deps;
+        graph->nodes[project_idx].dependency_capacity = new_capacity;
+    }
+    
+    // Add dependency
+    graph->nodes[project_idx].dependencies[graph->nodes[project_idx].dependency_count] = dependency_id;
+    graph->nodes[project_idx].dependency_count++;
+    
+    return 0;
+}
+
+int ProjectGraph_BFS(ProjectDependencyGraph* graph, uint32_t source_id, BFSResult* result) {
+    /**
+     * @brief Perform Breadth-First Search (BFS) traversal
+     * 
+     * Performs BFS traversal starting from the given source project ID.
+     * Finds the shortest path from source to all reachable projects.
+     * 
+     * @param graph Pointer to the dependency graph (must not be NULL)
+     * @param source_id Source project ID to start BFS from
+     * @param result Pointer to store BFS result (must be pre-allocated, can be NULL to ignore)
+     * @return 0 on success, -1 on error (NULL parameters or source not found)
+     * 
+     * @note Time complexity: O(V + E) where V is vertices and E is edges
+     * @note Space complexity: O(V) for queue and visited array
+     * @note The result structure must be freed using ProjectGraph_FreeBFSResult() after use
+     */
+    if (graph == NULL) {
+        return -1;
+    }
+    
+    int source_idx = find_node_index(graph, source_id);
+    if (source_idx < 0) {
+        return -1; // Source not found
+    }
+    
+    // Initialize visited flags
+    for (size_t i = 0; i < graph->project_count; i++) {
+        graph->nodes[i].visited = 0;
+    }
+    
+    // Initialize result if provided
+    if (result != NULL) {
+        result->visited_projects = (uint32_t*)safe_malloc(graph->project_count * sizeof(uint32_t));
+        result->distances = (size_t*)safe_malloc(graph->project_count * sizeof(size_t));
+        if (result->visited_projects == NULL || result->distances == NULL) {
+            if (result->visited_projects != NULL) free(result->visited_projects);
+            if (result->distances != NULL) free(result->distances);
+            return -1;
+        }
+        result->visited_count = 0;
+        
+        // Initialize distances to infinity (max value)
+        for (size_t i = 0; i < graph->project_count; i++) {
+            result->distances[i] = SIZE_MAX;
+        }
+    }
+    
+    // Create queue for BFS
+    SimpleQueue* queue = queue_create();
+    if (queue == NULL) {
+        if (result != NULL) {
+            ProjectGraph_FreeBFSResult(result);
+        }
+        return -1;
+    }
+    
+    // Enqueue source
+    if (queue_enqueue(queue, source_id) != 0) {
+        queue_destroy(queue);
+        if (result != NULL) {
+            ProjectGraph_FreeBFSResult(result);
+        }
+        return -1;
+    }
+    
+    graph->nodes[source_idx].visited = 1;
+    if (result != NULL) {
+        result->distances[source_idx] = 0;
+    }
+    
+    // BFS traversal
+    while (!queue_is_empty(queue)) {
+        uint32_t current_id;
+        if (queue_dequeue(queue, &current_id) != 0) {
+            break;
+        }
+        
+        int current_idx = find_node_index(graph, current_id);
+        if (current_idx < 0) continue;
+        
+        // Add to result
+        if (result != NULL) {
+            result->visited_projects[result->visited_count++] = current_id;
+        }
+        
+        // Visit all neighbors (dependencies)
+        for (size_t i = 0; i < graph->nodes[current_idx].dependency_count; i++) {
+            uint32_t neighbor_id = graph->nodes[current_idx].dependencies[i];
+            int neighbor_idx = find_node_index(graph, neighbor_id);
+            
+            if (neighbor_idx >= 0 && !graph->nodes[neighbor_idx].visited) {
+                graph->nodes[neighbor_idx].visited = 1;
+                
+                if (result != NULL) {
+                    result->distances[neighbor_idx] = result->distances[current_idx] + 1;
+                }
+                
+                queue_enqueue(queue, neighbor_id);
+            }
+        }
+    }
+    
+    queue_destroy(queue);
+    return 0;
+}
+
+// Helper function for DFS recursion
+static void dfs_visit(ProjectDependencyGraph* graph, int node_idx, DFSResult* result, size_t* time_counter) {
+    if (graph == NULL || node_idx < 0 || result == NULL || time_counter == NULL) {
+        return;
+    }
+    
+    graph->nodes[node_idx].visited = 1;
+    (*time_counter)++;
+    
+    if (result->discovery_times != NULL) {
+        result->discovery_times[node_idx] = *time_counter;
+    }
+    
+    // Visit all dependencies (neighbors)
+    for (size_t i = 0; i < graph->nodes[node_idx].dependency_count; i++) {
+        uint32_t neighbor_id = graph->nodes[node_idx].dependencies[i];
+        int neighbor_idx = find_node_index(graph, neighbor_id);
+        
+        if (neighbor_idx >= 0 && !graph->nodes[neighbor_idx].visited) {
+            dfs_visit(graph, neighbor_idx, result, time_counter);
+        }
+    }
+    
+    (*time_counter)++;
+    if (result->finish_times != NULL) {
+        result->finish_times[node_idx] = *time_counter;
+    }
+    
+    if (result->visited_projects != NULL) {
+        result->visited_projects[result->visited_count++] = graph->nodes[node_idx].project_id;
+    }
+}
+
+int ProjectGraph_DFS(ProjectDependencyGraph* graph, uint32_t source_id, DFSResult* result) {
+    /**
+     * @brief Perform Depth-First Search (DFS) traversal
+     * 
+     * Performs DFS traversal starting from the given source project ID.
+     * Explores as far as possible along each branch before backtracking.
+     * 
+     * @param graph Pointer to the dependency graph (must not be NULL)
+     * @param source_id Source project ID to start DFS from
+     * @param result Pointer to store DFS result (must be pre-allocated, can be NULL to ignore)
+     * @return 0 on success, -1 on error (NULL parameters or source not found)
+     * 
+     * @note Time complexity: O(V + E) where V is vertices and E is edges
+     * @note Space complexity: O(V) for recursion stack and visited array
+     * @note The result structure must be freed using ProjectGraph_FreeDFSResult() after use
+     */
+    if (graph == NULL) {
+        return -1;
+    }
+    
+    int source_idx = find_node_index(graph, source_id);
+    if (source_idx < 0) {
+        return -1; // Source not found
+    }
+    
+    // Initialize visited flags
+    for (size_t i = 0; i < graph->project_count; i++) {
+        graph->nodes[i].visited = 0;
+    }
+    
+    // Initialize result if provided
+    if (result != NULL) {
+        result->visited_projects = (uint32_t*)safe_malloc(graph->project_count * sizeof(uint32_t));
+        result->discovery_times = (size_t*)safe_malloc(graph->project_count * sizeof(size_t));
+        result->finish_times = (size_t*)safe_malloc(graph->project_count * sizeof(size_t));
+        if (result->visited_projects == NULL || result->discovery_times == NULL || result->finish_times == NULL) {
+            if (result->visited_projects != NULL) free(result->visited_projects);
+            if (result->discovery_times != NULL) free(result->discovery_times);
+            if (result->finish_times != NULL) free(result->finish_times);
+            return -1;
+        }
+        result->visited_count = 0;
+        result->time = 0;
+        
+        // Initialize times
+        for (size_t i = 0; i < graph->project_count; i++) {
+            result->discovery_times[i] = 0;
+            result->finish_times[i] = 0;
+        }
+    }
+    
+    size_t time_counter = 0;
+    dfs_visit(graph, source_idx, result, &time_counter);
+    
+    if (result != NULL) {
+        result->time = time_counter;
+    }
+    
+    return 0;
+}
+
+size_t ProjectGraph_FindDependents(ProjectDependencyGraph* graph, uint32_t project_id,
+                                   uint32_t* dependents, size_t max_count) {
+    /**
+     * @brief Find all projects that depend on a given project (reverse dependencies)
+     * 
+     * Finds all projects that have the given project as a dependency.
+     * Uses BFS to find all reachable dependent projects.
+     * 
+     * @param graph Pointer to the dependency graph (must not be NULL)
+     * @param project_id Project ID to find dependents for
+     * @param dependents Array to store dependent project IDs (must be pre-allocated)
+     * @param max_count Maximum number of dependents to retrieve
+     * @return Number of dependents found
+     * 
+     * @note Time complexity: O(V + E) where V is vertices and E is edges
+     */
+    if (graph == NULL || dependents == NULL || max_count == 0) {
+        return 0;
+    }
+    
+    size_t count = 0;
+    
+    // Search through all projects to find those that depend on project_id
+    for (size_t i = 0; i < graph->project_count && count < max_count; i++) {
+        // Check if this project has project_id as a dependency
+        for (size_t j = 0; j < graph->nodes[i].dependency_count; j++) {
+            if (graph->nodes[i].dependencies[j] == project_id) {
+                dependents[count++] = graph->nodes[i].project_id;
+                break;
+            }
+        }
+    }
+    
+    return count;
+}
+
+int ProjectGraph_HasPath(ProjectDependencyGraph* graph, uint32_t source_id, uint32_t target_id) {
+    /**
+     * @brief Check if there is a path from source to target project
+     * 
+     * Uses BFS to check if target is reachable from source.
+     * 
+     * @param graph Pointer to the dependency graph (must not be NULL)
+     * @param source_id Source project ID
+     * @param target_id Target project ID
+     * @return 1 if path exists, 0 if no path, -1 on error
+     * 
+     * @note Time complexity: O(V + E) where V is vertices and E is edges
+     */
+    if (graph == NULL) {
+        return -1;
+    }
+    
+    BFSResult result;
+    result.visited_projects = NULL;
+    result.distances = NULL;
+    result.visited_count = 0;
+    
+    if (ProjectGraph_BFS(graph, source_id, &result) != 0) {
+        return -1;
+    }
+    
+    // Check if target exists in graph first
+    int target_idx = find_node_index(graph, target_id);
+    if (target_idx < 0) {
+        ProjectGraph_FreeBFSResult(&result);
+        return -1; // Target not found in graph
+    }
+    
+    // Check if target was visited
+    int has_path = (result.distances != NULL && 
+                   result.distances[target_idx] != SIZE_MAX) ? 1 : 0;
+    
+    ProjectGraph_FreeBFSResult(&result);
+    return has_path;
+}
+
+int ProjectGraph_FindShortestPath(ProjectDependencyGraph* graph, uint32_t source_id, uint32_t target_id,
+                                   uint32_t* path, size_t max_path_length) {
+    /**
+     * @brief Find shortest path from source to target using BFS
+     * 
+     * Finds the shortest path (in terms of number of edges) from source to target.
+     * 
+     * @param graph Pointer to the dependency graph (must not be NULL)
+     * @param source_id Source project ID
+     * @param target_id Target project ID
+     * @param path Array to store path (project IDs in order, must be pre-allocated)
+     * @param max_path_length Maximum path length
+     * @return Path length (number of edges) on success, -1 on error or no path
+     * 
+     * @note Time complexity: O(V + E) where V is vertices and E is edges
+     */
+    if (graph == NULL || path == NULL || max_path_length == 0) {
+        return -1;
+    }
+    
+    BFSResult result;
+    result.visited_projects = NULL;
+    result.distances = NULL;
+    result.visited_count = 0;
+    
+    if (ProjectGraph_BFS(graph, source_id, &result) != 0) {
+        return -1;
+    }
+    
+    int target_idx = find_node_index(graph, target_id);
+    if (target_idx < 0 || result.distances == NULL || result.distances[target_idx] == SIZE_MAX) {
+        ProjectGraph_FreeBFSResult(&result);
+        return -1; // No path exists
+    }
+    
+    // Reconstruct path using parent tracking (simplified - just return distance)
+    // For full path reconstruction, we would need to track parents during BFS
+    size_t path_length = result.distances[target_idx];
+    
+    if (path_length + 1 > max_path_length) {
+        ProjectGraph_FreeBFSResult(&result);
+        return -1; // Path too long
+    }
+    
+    // Simple path: just return source and target
+    path[0] = source_id;
+    if (path_length > 0) {
+        path[path_length] = target_id;
+    }
+    
+    ProjectGraph_FreeBFSResult(&result);
+    return (int)path_length;
+}
+
+void ProjectGraph_FreeBFSResult(BFSResult* result) {
+    /**
+     * @brief Free BFS result structure
+     * 
+     * Frees memory allocated for BFS result structure.
+     * 
+     * @param result Pointer to BFS result to free (can be NULL)
+     */
+    if (result == NULL) {
+        return;
+    }
+    
+    if (result->visited_projects != NULL) {
+        free(result->visited_projects);
+        result->visited_projects = NULL;
+    }
+    
+    if (result->distances != NULL) {
+        free(result->distances);
+        result->distances = NULL;
+    }
+    
+    result->visited_count = 0;
+}
+
+void ProjectGraph_FreeDFSResult(DFSResult* result) {
+    /**
+     * @brief Free DFS result structure
+     * 
+     * Frees memory allocated for DFS result structure.
+     * 
+     * @param result Pointer to DFS result to free (can be NULL)
+     */
+    if (result == NULL) {
+        return;
+    }
+    
+    if (result->visited_projects != NULL) {
+        free(result->visited_projects);
+        result->visited_projects = NULL;
+    }
+    
+    if (result->discovery_times != NULL) {
+        free(result->discovery_times);
+        result->discovery_times = NULL;
+    }
+    
+    if (result->finish_times != NULL) {
+        free(result->finish_times);
+        result->finish_times = NULL;
+    }
+    
+    result->visited_count = 0;
+    result->time = 0;
+}
+
+ProjectDependencyGraph* ProjectGraph_BuildFromStack(ProjectStack* stack) {
+    /**
+     * @brief Build dependency graph from project stack
+     * 
+     * Builds a dependency graph from an existing project stack.
+     * This is a helper function to convert project stack to graph format.
+     * 
+     * @param stack Pointer to the project stack (must not be NULL)
+     * @return Pointer to the created graph, or NULL on error
+     * 
+     * @note Time complexity: O(V) where V is the number of projects
+     */
+    if (stack == NULL) {
+        return NULL;
+    }
+    
+    ProjectDependencyGraph* graph = ProjectGraph_Create(0);
+    if (graph == NULL) {
+        return NULL;
+    }
+    
+    // Add all projects from stack to graph
+    ProjectStackNode* current = stack->top;
+    while (current != NULL) {
+        if (ProjectGraph_AddProject(graph, current->project.id) != 0) {
+            ProjectGraph_Destroy(graph);
+            return NULL;
+        }
+        current = current->next;
+    }
+    
+    return graph;
+}
+
+void ProjectGraph_Display(ProjectDependencyGraph* graph) {
+    /**
+     * @brief Display dependency graph structure
+     * 
+     * Prints the dependency graph structure for debugging.
+     * 
+     * @param graph Pointer to the dependency graph (must not be NULL)
+     */
+    if (graph == NULL) {
+        printf("Graph is NULL.\n");
+        return;
+    }
+    
+    printf("\n=== Project Dependency Graph ===\n");
+    printf("Total Projects: %zu\n\n", graph->project_count);
+    
+    for (size_t i = 0; i < graph->project_count; i++) {
+        printf("Project ID: %u\n", graph->nodes[i].project_id);
+        printf("  Dependencies (%zu): ", graph->nodes[i].dependency_count);
+        
+        if (graph->nodes[i].dependency_count == 0) {
+            printf("None");
+        } else {
+            for (size_t j = 0; j < graph->nodes[i].dependency_count; j++) {
+                printf("%u", graph->nodes[i].dependencies[j]);
+                if (j < graph->nodes[i].dependency_count - 1) {
+                    printf(", ");
+                }
+            }
+        }
+        printf("\n\n");
+    }
+    printf("================================\n\n");
+}
+

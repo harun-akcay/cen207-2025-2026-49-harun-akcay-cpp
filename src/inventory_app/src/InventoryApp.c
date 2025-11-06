@@ -786,17 +786,78 @@ MenuType InventoryApp_ShowSalesTrackerMenu(void) {
     switch (choice) {
         case 1:
             printf("\n--- Record Sale ---\n");
-            printf("Sales tracking functionality will be implemented soon.\n");
+            {
+                SalesTracker* tracker = InventoryManager_GetSalesTracker();
+                if (tracker == NULL) {
+                    printf("Error: Sales tracker not initialized.\n");
+                    return MENU_SALES_TRACKER;
+                }
+                
+                uint32_t material_id = 0;
+                uint32_t project_id = 0;
+                uint32_t quantity = 0;
+                uint32_t unit_price = 0;
+                uint32_t unit_cost = 0;
+                char customer_name[128];
+                
+                if (InventoryApp_GetIntInput("Enter Material ID (0 for none): ", (int*)&material_id) != 0 ||
+                    InventoryApp_GetIntInput("Enter Project ID (0 for none): ", (int*)&project_id) != 0 ||
+                    InventoryApp_GetIntInput("Enter Quantity: ", (int*)&quantity) != 0 ||
+                    InventoryApp_GetIntInput("Enter Unit Price (in cents): ", (int*)&unit_price) != 0 ||
+                    InventoryApp_GetIntInput("Enter Unit Cost (in cents): ", (int*)&unit_cost) != 0 ||
+                    InventoryApp_GetStringInput("Enter Customer Name: ", customer_name, sizeof(customer_name)) != 0) {
+                    printf("Invalid input. Please try again.\n");
+                    return MENU_SALES_TRACKER;
+                }
+                
+                uint32_t sale_id = SalesTracker_RecordSale(tracker, material_id, project_id,
+                                                          quantity, unit_price, unit_cost, customer_name);
+                if (sale_id != 0) {
+                    printf("Sale recorded successfully! Sale ID: %u\n", sale_id);
+                } else {
+                    printf("Error: Failed to record sale.\n");
+                }
+            }
             return MENU_SALES_TRACKER;
             
         case 2:
             printf("\n--- View Sales ---\n");
-            printf("Sales tracking functionality will be implemented soon.\n");
+            {
+                SalesTracker* tracker = InventoryManager_GetSalesTracker();
+                if (tracker == NULL) {
+                    printf("Error: Sales tracker not initialized.\n");
+                    return MENU_SALES_TRACKER;
+                }
+                
+                int max_count = 0;
+                if (InventoryApp_GetIntInput("Enter maximum number of sales to display (0 for all): ", &max_count) != 0) {
+                    max_count = 0; // Display all if input fails
+                }
+                
+                SalesTracker_ViewSales(tracker, (max_count > 0) ? (size_t)max_count : 0);
+            }
             return MENU_SALES_TRACKER;
             
         case 3:
             printf("\n--- Profit Calculation ---\n");
-            printf("Profit calculation functionality will be implemented soon.\n");
+            {
+                SalesTracker* tracker = InventoryManager_GetSalesTracker();
+                if (tracker == NULL) {
+                    printf("Error: Sales tracker not initialized.\n");
+                    return MENU_SALES_TRACKER;
+                }
+                
+                uint64_t total_profit = SalesTracker_CalculateTotalProfit(tracker);
+                size_t sales_count = SalesTracker_GetSalesCount(tracker);
+                
+                printf("Total Sales: %zu\n", sales_count);
+                printf("Total Profit: %.2f (cents: %llu)\n", 
+                       total_profit / 100.0, (unsigned long long)total_profit);
+                
+                if (sales_count > 0) {
+                    printf("Average Profit per Sale: %.2f\n", (total_profit / 100.0) / sales_count);
+                }
+            }
             return MENU_SALES_TRACKER;
             
         case 0:

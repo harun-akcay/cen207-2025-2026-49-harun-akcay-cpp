@@ -27,6 +27,11 @@ target_include_directories(${LIBNAME} PUBLIC
 # creates preprocessor definition used for library exports
 add_compile_definitions("CORUH_INVENTORY_LIB_EXPORTS")
 
+# For MSVC: Ensure C runtime is linked (needed for realloc, malloc, etc.)
+if(MSVC)
+    target_compile_options(${LIBNAME} PRIVATE $<$<CONFIG:Debug>:/MTd> $<$<CONFIG:Release>:/MT>)
+endif()
+
 install(TARGETS ${LIBNAME}
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
@@ -37,6 +42,9 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/header/InventoryManager.h
         ${CMAKE_CURRENT_SOURCE_DIR}/header/MaterialInventory.h
         ${CMAKE_CURRENT_SOURCE_DIR}/header/ProjectTracking.h
         ${CMAKE_CURRENT_SOURCE_DIR}/header/ExpenseTracking.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/header/SalesTracker.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/header/TaskQueue.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/header/NavigationHistory.h
         DESTINATION include)
 
 # Export the inventory_lib target so other modules can use it

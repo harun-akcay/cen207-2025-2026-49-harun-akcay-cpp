@@ -671,6 +671,208 @@ TEST_F(InventoryManagerTest, HashTable_SaveLoadEmpty) {
 	remove(filename);
 }
 
+// Login History Stack Tests
+
+TEST_F(InventoryManagerTest, LoginHistoryStack_CreateDestroy) {
+	LoginHistoryStack* stack = LoginHistoryStack_Create(10);
+	EXPECT_NE(stack, nullptr);
+	EXPECT_EQ(LoginHistoryStack_GetSize(stack), 0);
+	
+	LoginHistoryStack_Destroy(stack);
+}
+
+TEST_F(InventoryManagerTest, LoginHistoryStack_PushPop) {
+	LoginHistoryStack* stack = LoginHistoryStack_Create(10);
+	EXPECT_NE(stack, nullptr);
+	
+	EXPECT_EQ(LoginHistoryStack_Push(stack, "user1"), 0);
+	EXPECT_EQ(LoginHistoryStack_GetSize(stack), 1);
+	
+	LoginHistoryEntry entry;
+	EXPECT_EQ(LoginHistoryStack_Pop(stack, &entry), 0);
+	EXPECT_STREQ(entry.username, "user1");
+	EXPECT_EQ(LoginHistoryStack_GetSize(stack), 0);
+	
+	LoginHistoryStack_Destroy(stack);
+}
+
+TEST_F(InventoryManagerTest, LoginHistoryStack_Peek) {
+	LoginHistoryStack* stack = LoginHistoryStack_Create(10);
+	EXPECT_NE(stack, nullptr);
+	
+	EXPECT_EQ(LoginHistoryStack_Push(stack, "user1"), 0);
+	
+	LoginHistoryEntry entry;
+	EXPECT_EQ(LoginHistoryStack_Peek(stack, &entry), 0);
+	EXPECT_STREQ(entry.username, "user1");
+	EXPECT_EQ(LoginHistoryStack_GetSize(stack), 1); // Size should not change
+	
+	LoginHistoryStack_Destroy(stack);
+}
+
+TEST_F(InventoryManagerTest, LoginHistoryStack_IsEmpty) {
+	LoginHistoryStack* stack = LoginHistoryStack_Create(10);
+	EXPECT_NE(stack, nullptr);
+	
+	EXPECT_EQ(LoginHistoryStack_IsEmpty(stack), 1);
+	
+	LoginHistoryStack_Push(stack, "user1");
+	EXPECT_EQ(LoginHistoryStack_IsEmpty(stack), 0);
+	
+	LoginHistoryStack_Destroy(stack);
+}
+
+// InventoryManager Wrapper Functions Tests
+
+TEST_F(InventoryManagerTest, InventoryManager_GetHashTable) {
+	InventoryManager_Init(NULL);
+	
+	HashTable* ht = InventoryManager_GetHashTable();
+	EXPECT_NE(ht, nullptr);
+	
+	InventoryManager_Cleanup(NULL);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_RegisterUser) {
+	InventoryManager_Init(NULL);
+	
+	EXPECT_EQ(InventoryManager_RegisterUser("testuser", "testpass"), 0);
+	EXPECT_EQ(InventoryManager_RegisterUser("testuser", "testpass2"), -1); // Duplicate
+	
+	InventoryManager_Cleanup(NULL);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_LoginUser) {
+	InventoryManager_Init(NULL);
+	
+	EXPECT_EQ(InventoryManager_RegisterUser("testuser", "testpass"), 0);
+	EXPECT_EQ(InventoryManager_LoginUser("testuser", "testpass"), 1);
+	EXPECT_EQ(InventoryManager_LoginUser("testuser", "wrongpass"), 0);
+	
+	InventoryManager_Cleanup(NULL);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_GetLoginHistory) {
+	InventoryManager_Init(NULL);
+	
+	LoginHistoryStack* stack = InventoryManager_GetLoginHistory();
+	EXPECT_NE(stack, nullptr);
+	
+	InventoryManager_Cleanup(NULL);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_AddLoginHistory) {
+	InventoryManager_Init(NULL);
+	
+	EXPECT_EQ(InventoryManager_AddLoginHistory("user1"), 0);
+	EXPECT_EQ(InventoryManager_AddLoginHistory(NULL), -1);
+	
+	InventoryManager_Cleanup(NULL);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_ViewLoginHistory) {
+	InventoryManager_Init(NULL);
+	
+	InventoryManager_AddLoginHistory("user1");
+	InventoryManager_AddLoginHistory("user2");
+	
+	// ViewLoginHistory should not crash
+	EXPECT_EQ(InventoryManager_ViewLoginHistory(0), 0);
+	EXPECT_EQ(InventoryManager_ViewLoginHistory(1), 0);
+	
+	InventoryManager_Cleanup(NULL);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_GetMaterialList) {
+	InventoryManager_Init(NULL);
+	
+	MaterialList* list = InventoryManager_GetMaterialList();
+	EXPECT_NE(list, nullptr);
+	
+	InventoryManager_Cleanup(NULL);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_InitMaterialInventory) {
+	EXPECT_EQ(InventoryManager_InitMaterialInventory(NULL), 0);
+	
+	MaterialList* list = InventoryManager_GetMaterialList();
+	EXPECT_NE(list, nullptr);
+	
+	InventoryManager_CleanupMaterialInventory(NULL);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_CleanupMaterialInventory) {
+	InventoryManager_InitMaterialInventory(NULL);
+	
+	EXPECT_EQ(InventoryManager_CleanupMaterialInventory(NULL), 0);
+	
+	MaterialList* list = InventoryManager_GetMaterialList();
+	EXPECT_EQ(list, nullptr);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_GetProjectStack) {
+	InventoryManager_Init(NULL);
+	
+	ProjectStack* stack = InventoryManager_GetProjectStack();
+	EXPECT_NE(stack, nullptr);
+	
+	InventoryManager_Cleanup(NULL);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_InitProjectTracking) {
+	EXPECT_EQ(InventoryManager_InitProjectTracking(NULL), 0);
+	
+	ProjectStack* stack = InventoryManager_GetProjectStack();
+	EXPECT_NE(stack, nullptr);
+	
+	InventoryManager_CleanupProjectTracking(NULL);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_CleanupProjectTracking) {
+	InventoryManager_InitProjectTracking(NULL);
+	
+	EXPECT_EQ(InventoryManager_CleanupProjectTracking(NULL), 0);
+	
+	ProjectStack* stack = InventoryManager_GetProjectStack();
+	EXPECT_EQ(stack, nullptr);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_GetExpenseMatrix) {
+	InventoryManager_Init(NULL);
+	
+	ExpenseMatrix* matrix = InventoryManager_GetExpenseMatrix();
+	EXPECT_NE(matrix, nullptr);
+	
+	InventoryManager_Cleanup(NULL);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_GetSalesTracker) {
+	InventoryManager_Init(NULL);
+	
+	SalesTracker* tracker = InventoryManager_GetSalesTracker();
+	EXPECT_NE(tracker, nullptr);
+	
+	InventoryManager_Cleanup(NULL);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_InitExpenseTracking) {
+	EXPECT_EQ(InventoryManager_InitExpenseTracking(NULL), 0);
+	
+	ExpenseMatrix* matrix = InventoryManager_GetExpenseMatrix();
+	EXPECT_NE(matrix, nullptr);
+	
+	InventoryManager_CleanupExpenseTracking(NULL);
+}
+
+TEST_F(InventoryManagerTest, InventoryManager_CleanupExpenseTracking) {
+	InventoryManager_InitExpenseTracking(NULL);
+	
+	EXPECT_EQ(InventoryManager_CleanupExpenseTracking(NULL), 0);
+	
+	ExpenseMatrix* matrix = InventoryManager_GetExpenseMatrix();
+	EXPECT_EQ(matrix, nullptr);
+}
+
 
 int main(int argc, char** argv) {
 	::testing::InitGoogleTest(&argc, argv);

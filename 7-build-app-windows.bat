@@ -84,7 +84,7 @@ echo Generate Test Coverage Data for Inventory Manager
 call OpenCppCoverage.exe --export_type=binary:inventory_lib_tests_unit_win.cov --sources src\inventory_lib\src --sources src\inventory_lib\header --sources src\tests\inventory_lib_test -- build_win\build\Debug\inventory_lib_tests.exe
 
 echo Generate Test Coverage Data for Inventory App and Combine Results
-call OpenCppCoverage.exe --input_coverage=inventory_lib_tests_unit_win.cov --export_type=cobertura:inventory_app_unit_win_cobertura.xml --sources src\inventory_lib\src --sources src\inventory_lib\header --sources src\inventory_app\src --sources src\inventory_app\header --sources src\tests\inventory_lib_test -- build_win\build\Debug\inventory_app.exe
+echo 99 | OpenCppCoverage.exe --input_coverage=inventory_lib_tests_unit_win.cov --export_type=cobertura:inventory_app_unit_win_cobertura.xml --sources src\inventory_lib\src --sources src\inventory_lib\header --sources src\inventory_app\src --sources src\inventory_app\header --sources src\tests\inventory_lib_test -- build_win\build\Debug\inventory_app.exe
 
 
 echo Generate Test Coverage Data for Inventory App Error Test

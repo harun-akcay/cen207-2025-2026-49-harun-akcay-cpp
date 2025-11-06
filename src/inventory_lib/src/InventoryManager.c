@@ -7,6 +7,7 @@
 #include "../header/MaterialInventory.h"
 #include "../header/ProjectTracking.h"
 #include "../header/ExpenseTracking.h"
+#include "../header/SalesTracker.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -58,6 +59,9 @@ static ProjectStack* g_project_stack = NULL;
 
 /** @brief Global expense matrix for expense logging */
 static ExpenseMatrix* g_expense_matrix = NULL;
+
+/** @brief Global sales tracker for sales tracking */
+static SalesTracker* g_sales_tracker = NULL;
 
 int InventoryManager_Init(const char* filename) {
     /**
@@ -134,6 +138,18 @@ int InventoryManager_Init(const char* filename) {
         }
     }
     
+    // Initialize sales tracker if not already initialized
+    if (g_sales_tracker == NULL) {
+        g_sales_tracker = SalesTracker_LoadFromFile(NULL, "sales.bin");
+        if (g_sales_tracker == NULL) {
+            // Create new tracker if file doesn't exist
+            g_sales_tracker = SalesTracker_Create();
+            if (g_sales_tracker == NULL) {
+                return -1;
+            }
+        }
+    }
+    
     return 0;
 }
 
@@ -184,6 +200,13 @@ int InventoryManager_Cleanup(const char* filename) {
         ExpenseMatrix_SaveToFile(g_expense_matrix, "expenses.bin");
         ExpenseMatrix_Destroy(g_expense_matrix);
         g_expense_matrix = NULL;
+    }
+    
+    // Cleanup sales tracker
+    if (g_sales_tracker != NULL) {
+        SalesTracker_SaveToFile(g_sales_tracker, "sales.bin");
+        SalesTracker_Destroy(g_sales_tracker);
+        g_sales_tracker = NULL;
     }
     
     return 0;
@@ -1054,6 +1077,18 @@ ExpenseMatrix* InventoryManager_GetExpenseMatrix(void) {
      * @return Pointer to the global expense matrix, or NULL if not initialized
      */
     return g_expense_matrix;
+}
+
+SalesTracker* InventoryManager_GetSalesTracker(void) {
+    /**
+     * @brief Get the global sales tracker instance
+     * 
+     * Returns a pointer to the global sales tracker instance.
+     * The sales tracker is initialized by InventoryManager_Init().
+     * 
+     * @return Pointer to the global sales tracker, or NULL if not initialized
+     */
+    return g_sales_tracker;
 }
 
 int InventoryManager_InitExpenseTracking(const char* filename) {
