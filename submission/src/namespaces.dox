@@ -1,0 +1,18 @@
+/**
+ * @file namespaces.dox
+ * @brief File containing the Doxygen documentation for namespaces.
+ */
+
+/**
+ * @namespace Coruh
+ * @brief Root namespace for all Coruh-related code.
+ *
+ * This is the top-level namespace for all components, classes, and functions related to the Coruh library.
+ */
+ 
+ /**
+ * @namespace Coruh::Inventory
+ * @brief Namespace for inventory management functions and classes.
+ *
+ * This namespace contains a collection of inventory management functions and classes that provide commonly-used functionality for crafters.
+ */
